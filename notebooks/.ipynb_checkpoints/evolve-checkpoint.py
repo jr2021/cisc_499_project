@@ -1,4 +1,4 @@
-import initialize as init
+import initialization as init
 
 params = {'generations': 10,
           'num_children': 10,
