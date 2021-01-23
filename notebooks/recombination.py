@@ -12,7 +12,7 @@ def pairwise(params, parents, crossover):
 
 def order(params, mother, father):
     x, y = np.random.randint(0, params['len_gene']), np.random.randint(0, params['len_gene'])
-    off = {'gene': -np.ones(shape=params['len_gene'], dtype=np.int), 'fitness': np.array([0 for _ in range(params['n_objs'])])}
+    off = {'gene': -np.ones(shape=params['len_gene'], dtype=np.int), 'fitness': np.array([0 for _ in range(params['n_objs'])]), 'meta': np.array([0 for _ in range(params['len_meta'])])}
 
     off['gene'][min(x, y):max(x, y)] = mother['gene'][min(x, y):max(x, y)]
 
