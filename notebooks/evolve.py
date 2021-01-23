@@ -7,27 +7,29 @@ import mutation as mut
 
 
 initialize = init.permutation
-evaluate = eval.TSP
+evaluate = eval.custom
 select = sel.rank_based
 mutate = mut.swap
-recombine = rec.order
+reproduce = rec.pairwise
+crossover = rec.order
 replace = sel.rank_based
 
-params = {'generations': 1000,
-          'num_children': 50,
-          'num_parents': 100,
-          'num_solutions': 150,
-          'len_allele': 100,
-          'mutation rate': 0.5,
-          'data': np.random.randint(size=(100, 100), low=0, high=1000)}
+params = {'gens': 100,
+          'n_off': 50,
+          'n_pars': 100,
+          'n_objs': 1,
+          'pop_size': 150,
+          'len_gene': 100,
+          'mut_rate': 0.5}
 
 population = initialize(params)
 population = evaluate(params, population)
 
-for generation in range(params['generations']):
-    parents = select(population, params['num_parents'])
-    children = recombine(params, parents)
-    children = mutate(params, children)
-    children = evaluate(params, children)
-    population = replace(np.concatenate((population, children), axis=0), params['num_solutions'])
+for gen in range(params['gens']):
+    parents = select(population, params['n_pars'])
+    offspring = reproduce(params, parents, crossover)
+    offspring = mutate(params, offspring)
+    offspring = evaluate(params, offspring)
+    population = replace(np.concatenate((population, offspring), axis=0), params['pop_size'])
 
+    print(gen)

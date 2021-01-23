@@ -1,22 +1,26 @@
 import numpy as np
 
 
-def order(params, parents):
-    children = np.empty(shape=params['num_children'], dtype=dict)
+def pairwise(params, parents, crossover):
+    offspring = np.empty(shape=params['n_off'], dtype=dict)
 
-    for i in range(0, params['num_parents'] - 1, 2):
-        x, y = np.random.randint(0, params['len_allele']), np.random.randint(0, params['len_allele'])
-        child = {'allele': -np.ones(shape=params['len_allele'], dtype=np.int), 'fitness': None}
+    for i in range(0, params['n_off'] - 1, 2):
+        offspring[i], offspring[i + 1] = crossover(params, parents[i], parents[i + 1]), crossover(params, parents[i + 1], parents[i])
 
-        child['allele'][min(x, y):max(x, y)] = parents[i]['allele'][min(x, y):max(x, y)]
+    return offspring
 
-        j, k = max(x, y) - params['len_allele'], max(x, y) - params['len_allele']
-        while j < min(x, y):
-            if parents[i + 1]['allele'][k] not in child['allele']:
-                child['allele'][j] = parents[i + 1]['allele'][k]
-                j += 1
-            k += 1
 
-        children[i // 2] = child
+def order(params, mother, father):
+    x, y = np.random.randint(0, params['len_gene']), np.random.randint(0, params['len_gene'])
+    off = {'gene': -np.ones(shape=params['len_gene'], dtype=np.int), 'fitness': np.array([0 for _ in range(params['n_objs'])])}
 
-    return children
+    off['gene'][min(x, y):max(x, y)] = mother['gene'][min(x, y):max(x, y)]
+
+    j, k = max(x, y) - params['len_gene'], max(x, y) - params['len_gene']
+    while j < min(x, y):
+        if father['gene'][k] not in off['gene']:
+            off['gene'][j] = father['gene'][k]
+            j += 1
+        k += 1
+
+    return off

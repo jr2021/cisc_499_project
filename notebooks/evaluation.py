@@ -1,7 +1,12 @@
 import numpy as np
 
 
-def TSP(params, population):
-    for sol in population:
-        sol['fitness'] = np.array([params['data'][sol['allele'][i - 1]][sol['allele'][i]] for i in range(1, params['len_allele'])]).sum()
+def custom(params, population):
+    data = np.loadtxt('data.txt')
+
+    for ind in population:
+        ind['fitness'][0] += data[0][ind['gene'][0]]
+        ind['fitness'][0] += np.array([data[ind['gene'][i - 1]][ind['gene'][i]] for i in range(1, params['len_gene'])]).sum()
+        data[ind['gene'][-1]][0]
+
     return population
