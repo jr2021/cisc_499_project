@@ -18,7 +18,6 @@ params = {'gens': 100,
           'n_off': 50,
           'n_pars': 100,
           'n_objs': 1,
-          'len_meta': 0,
           'pop_size': 150,
           'len_gene': 100,
           'mut_rate': 0.5}
