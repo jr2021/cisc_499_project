@@ -7,14 +7,7 @@ import pandas as pd
 from dash.dependencies import Input, Output, State
 import initialization as init
 import pandas as pd
-
-
-static_params = {'permutation' : {'min': None,
-                                  'max': None},
-                 'binary': {},
-                 'integer': {},
-                 'real': {}
-                }
+import json
 
 representation = None
 
@@ -36,25 +29,27 @@ def create_app():
     ])   
     
     @app.callback(
-        [Output('sel-collapse', 'is_open'),
+         Output('sel-collapse', 'is_open'),
          Output('sel-collapse', 'children'),
-         Output('rep-dropdown', 'label')],
-        [Input('perm-option', 'n_clicks')],
-        [State('sel-collapse', 'is_open')],
+         Output('rep-dropdown', 'label'),
+         Input('perm-option', 'n_clicks'),
+         State('sel-collapse', 'is_open'),
     )
-    def open_perm_sel(n, is_open):
+    def open_perm_options(n, is_open):
         if n:
             representation = 'permutation'
             return True, [html.Br(),
                           dbc.Input(id='min-val',
                                     placeholder='Enter the minimum value for your permutation',
-                                    type='number', 
+                                    type='number',
+                                    value=0,
                                     min=0, 
                                     step=1), 
                           html.Br(),
                           dbc.Input(id='max-val',
                                     placeholder='Enter the maximum value for your permutation',
                                     type='number', 
+                                    value=1,
                                     min=1, 
                                     step=1),
                           html.Br(),
@@ -66,19 +61,35 @@ def create_app():
             
         
     @app.callback(
-        [Output('perms-collapse', 'is_open'),
-         Output('perms-collapse', 'children')],
-        [Input('create-perms', 'n_clicks'),
-         Input('min-val', 'value'),
-         Input('max-val', 'value')],
-        [State('perms-collapse', 'is_open')],
+        Output('perms-collapse', 'is_open'),
+        Output('perms-collapse', 'children'),
+        Input('create-perms', 'n_clicks'),
+        State('min-val', 'value'),
+        State('max-val', 'value'),
+        State('perms-collapse', 'is_open')
     )
-    def open_perms(n, low, high, is_open):
+    def show_perms(n, low, high, is_open):
         if n:
             df = pd.DataFrame(init.sample_perm(low, high))
-            return True, [html.Br(), dbc.Table.from_dataframe(df)]
+            return True, [html.Br(), dbc.Table.from_dataframe(df), html.Br(), dbc.Button('Save static parameters', id='save-params')]
         else:
-            return False, [] 
+            return False, []
             
+    
+    @app.callback(
+         Output('save-params', 'children'),
+         Input('save-params', 'n_clicks'),
+         State('min-val', 'value'),
+         State('max-val', 'value')
+    )
+    def save_params(n, low, high):
+        if n:
+            with open('params.txt', 'w') as f:
+                json.dump({'min': low,
+                           'max': high,
+                           'len': high - low}, f)
+            return 'Saved'
+        else:
+            return 'Save static parameters'
     
     return app
