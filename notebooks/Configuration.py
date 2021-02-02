@@ -4,47 +4,67 @@ import numpy as np
 class Config:
 
     rep = None
-    pop_size = 5
-    par_size = None
-    off_size = None
+    pop_size = 8
+    par_size = 4
+    off_size = 4
     gene_size = None
     fit_eval = None
-    num_objs = 1
+    prob_type = None
+    
+class Mating:
 
-    class Recombination:
+    def pairwise(self, pars):
+        offs = np.empty(shape=self.off_size, dtype=dict)
 
-        def pairwise(self, pars):
-            offs = np.empty(shape=self.off_size, dtype=dict)
+        for i in range(0, self.off_size - 1, 2):
+            offs[i], offs[i + 1] = self.rep.sel(pars[i], pars[i + 1]), self.rep.sel(pars[i + 1], pars[i])
 
-            for i in range(0, self.off_size - 1, 2):
-                offs[i], offs[i + 1] = self.rep.sel(pars[i], pars[i + 1]), self.rep.sel(pars[i + 1], pars[i])
+        return offs
 
-            return offs
+class Single:
+
+    configs = None
+
+    def __init__(self, configs):
+        self.configs = configs
+
+    def rank_based(self, pop):
+        return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.par_size])
+    
+
+class Multi:
+    
+    configs = None
+
+    def __init__(self, configs):
+        self.configs = configs
+
+    def rank_based(self, pop):
+        return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.par_size])
+    
+
+class Replacement:
+
+    configs = None
+
+    def __init__(self, configs):
+        self.configs = configs
+
+    def rank_based(self, pop):
+        return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.pop_size]) 
         
 class Permutation:
 
     configs = None
     min_value, max_value = None, None
-    select, mutate, cross, replace = None, None, None, None
+    mutate, cross, replace = None, None, None
 
 
     def __init__(self, configs):
         self.configs = configs
 
     def initialize(self):
-        return np.array([{'gene': np.random.permutation(self.configs.gene_size), 'fitness': np.array([0 for _ in range(self.configs.num_objs)])} for _ in range(self.configs.pop_size)])
-
-    class Selection:
-
-        configs = None
-        perm_configs = None
-
-        def __init__(self, configs, perm_configs):
-            self.configs, self.perm_configs = configs, perm_configs
-
-        def rank_based(self, pop):
-            return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.par_size])
-
+        return np.array([{'gene': np.random.permutation(np.arange(start=self.min_value, stop=self.max_value + 1)), 'fitness': np.array([0 for _ in range(self.configs.num_objs)])} for _ in range(self.configs.pop_size)])
 
     class Crossover:
 
@@ -85,15 +105,4 @@ class Permutation:
                 off['gene'][i], off['gene'][j] = off['gene'][j], off['gene'][i]
 
             return offs
-
-    class Replacement:
-
-        configs = None
-        perm_configs = None
-
-        def __init__(self, configs, perm_configs):
-            self.configs, self.perm_configs = configs, perm_configs
-
-        def rank_based(self, pop):
-            return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.pop_size])
 

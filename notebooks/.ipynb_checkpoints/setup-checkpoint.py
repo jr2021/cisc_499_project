@@ -3,13 +3,14 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from jupyter_dash import JupyterDash
-from Configuration import Config, Permutation
+from Configuration import *
 import pickle
 
 
 def create_app():
 
-    config = Config()
+    configs = Config()
+    configs.prob_type = Single(configs)
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
@@ -19,17 +20,17 @@ def create_app():
                                                       dbc.DropdownMenuItem('Binary', id='bin-option'),
                                                       dbc.DropdownMenuItem('Integer', id='int-option'),
                                                       dbc.DropdownMenuItem('Real-Valued', id='real-option')]),
-                           dbc.Collapse(id='sel-collapse')
+                           dbc.Collapse(id='stat-collapse')
     ])   
     
     @app.callback(
-         Output('sel-collapse', 'is_open'),
-         Output('sel-collapse', 'children'),
-         Input('perm-option', 'n_clicks'),
+         Output('stat-collapse', 'is_open'),
+         Output('stat-collapse', 'children'),
+         Input('perm-option', 'n_clicks'), prevent_initial_call=True, suppress_callback_exceptions=True
     )
     def open_perm_options(n):
         if n:
-            config.rep = Permutation(config)
+            configs.rep = Permutation(configs)
             
             return True, [dbc.Input(id='min-perm-val',
                                                    type='number',
@@ -42,24 +43,20 @@ def create_app():
                                                    min=1,
                                                    step=1),
                                          dbc.Button('Save static parameters', id='save-perm-params')]
-        else:
-            return False, []
             
     
     @app.callback(
          Output('save-perm-params', 'children'),
          Input('save-perm-params', 'n_clicks'),
          State('min-perm-val', 'value'),
-         State('max-perm-val', 'value')
+         State('max-perm-val', 'value'), prevent_initial_call=True, suppress_callback_exceptions=True
     )
     def save_perm_params(n, low, high):
         if n:
-            config.rep.min_value, config.rep.max_value, config.gene_size = low, high, high - low
+            configs.rep.min_value, configs.rep.max_value, configs.gene_size = low, high, high - low + 1
             with open('configs.pkl', 'wb') as f:
-                pickle.dump(config, f)
+                pickle.dump(configs, f)
             
             return 'Saved'
-        else:
-            return 'Save static parameters'
     
     return app
