@@ -10,10 +10,17 @@ class Config:
     gene_size = None
     fit_eval = None
     prob_type = None
+    num_objs = 1
+    pair, select, replace = None, None, None
     
-class Mating:
+class Pairing:
+    
+    configs = None
+    
+    def __init__(self, configs):
+        self.configs = configs
 
-    def pairwise(self, pars):
+    def adjacent(self, pars):
         offs = np.empty(shape=self.off_size, dtype=dict)
 
         for i in range(0, self.off_size - 1, 2):
@@ -30,6 +37,9 @@ class Single:
 
     def rank_based(self, pop):
         return np.array(sorted(pop, key=lambda sol: sol['fitness'])[:self.configs.par_size])
+    
+    def tournament(self, pop):
+        pass
     
 
 class Multi:
@@ -88,6 +98,9 @@ class Permutation:
                 k += 1
 
             return off
+        
+        def cycle(self, mother, father):
+            pass
 
     class Mutation:
 

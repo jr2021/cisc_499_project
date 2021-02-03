@@ -32,6 +32,7 @@ def create_app():
         if n:
             configs.rep = Permutation(configs)
             
+            
             return True, [dbc.Input(id='min-perm-val',
                                                    type='number',
                                                    value=0,
