@@ -7,6 +7,7 @@ from jupyter_dash import JupyterDash
 from Configuration import *
 import pickle
 
+#FIXME - default configurations
 def TSP(pop):
     dist = np.loadtxt('dist.txt')
 
@@ -17,7 +18,6 @@ def TSP(pop):
 
     return pop
 
-# FIXME - default configurations
 configs = Config()
 configs.pop_size, configs.par_size, configs.off_size, configs.gene_size = 32, 16, 16, 99
 configs.enc = Permutation(configs)
@@ -30,28 +30,44 @@ configs.enc.rec = configs.enc.Recombination(configs, configs.enc.configs).order
 configs.enc.mut = configs.enc.Mutation(configs, configs.enc.configs).swap
 configs.rep = Single(configs).rank_based
 
+running = True
+
 def create_app():
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
-    app.layout = html.Div(dbc.Button(id='start', children='Start'))
+    app.layout = html.Div([dbc.Button(id='start', 
+                                      children='Start'), 
+                           dbc.Button(id='stop', 
+                                      children='Stop')])
         
     @app.callback(
         Output('start', 'children'),
         Input('start', 'n_clicks'), prevent_initial_call = True
     )
-    def run(n):
-        if n:
-            population = configs.enc.initialize()
-            population = configs.eval(population)
+    def stop(n):
+        population = configs.enc.initialize()
+        population = configs.eval(population)
 
-            for i in range(0, 100):
-                parents = configs.sel(population, configs.par_size)
-                offspring = configs.pair(parents)
-                offspring = configs.enc.mut(offspring)
-                offspring = configs.eval(offspring)
-                population = configs.rep(np.concatenate((population, offspring), axis=0), configs.pop_size)
+        while running:
+            parents = configs.sel(population, configs.par_size)
+            offspring = configs.pair(parents)
+            offspring = configs.enc.mut(offspring)
+            offspring = configs.eval(offspring)
+            population = configs.rep(np.concatenate((population, offspring), axis=0), configs.pop_size)
 
-            return 'Finished'
+        return 'GA stopped'
+        
+    @app.callback(
+        Output('stop', 'children'),
+        Input('stop', 'n_clicks'), prevent_initial_call = True
+    )
+    def start(n):
+        global running
+        
+        running = False
+        
+        return 'Stop clicked'
+        
         
     return app
