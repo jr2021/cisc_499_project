@@ -4,6 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from jupyter_dash import JupyterDash
 from Configuration import *
+from Permutation import *
 import pickle
 
 
@@ -30,7 +31,7 @@ def create_app():
     )
     def open_perm_options(n):
         if n:
-            configs.rep = Permutation(configs)
+            configs.enc = Perm(configs)
             
             
             return True, [dbc.Input(id='min-perm-val',
@@ -54,7 +55,7 @@ def create_app():
     )
     def save_perm_params(n, low, high):
         if n:
-            configs.rep.min_value, configs.rep.max_value, configs.gene_size = low, high, high - low + 1
+            configs.enc.min_value, configs.enc.max_value, configs.gene_size = low, high, high - low + 1
             with open('configs.pkl', 'wb') as f:
                 pickle.dump(configs, f)
             
