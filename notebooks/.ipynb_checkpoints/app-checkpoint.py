@@ -2,6 +2,7 @@ import json
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+import dash
 from dash.dependencies import Input, Output, State
 from jupyter_dash import JupyterDash
 from Configuration import *
@@ -39,8 +40,8 @@ configs.pop_size, configs.par_size, configs.off_size, configs.gene_size = 64, 32
 configs.enc = Perm(configs)
 configs.eval, configs.vis = TSP, network
 configs.num_objs = 1
-configs.sel.obs = [min]
 configs.sel = Single(configs).rank_based
+# configs.sel.obs = [min]
 configs.pair = Pairing(configs).adjacent
 configs.enc.min_value, configs.enc.max_value = 0, 99
 configs.enc.rec = configs.enc.Recombination(configs, configs.enc.configs).order
@@ -56,11 +57,19 @@ def create_app():
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
-    app.layout = html.Div([dbc.Button(id='start', 
+    app.layout = html.Div([dcc.Dropdown(id='selection',
+                                        options=[{'label': 'foo', 'value': 'foo'},
+                                                 {'label': 'bar', 'value': 'bar'}],
+                                        value='foo',
+                                        disabled=False),
+                           dbc.Button(id='start', 
                                       children='Start',
-                                      disabled=False), 
+                                      disabled=True), 
                            dbc.Button(id='stop', 
                                       children='Stop',
+                                      disabled=False),
+                           dbc.Button(id='restart', 
+                                      children='Restart',
                                       disabled=False),
                            dbc.Button(id='pause', 
                                       children='Pause',
@@ -70,7 +79,7 @@ def create_app():
                                       disabled=False),
                            dcc.Graph(id='custom'),
                            dcc.Interval(id='interval', 
-                                        disabled=False)])
+                                        disabled=True)])
         
     @app.callback(
         Output('custom', 'figure'),
@@ -79,17 +88,52 @@ def create_app():
     def update_custom(n):
         return configs.vis(configs.sel(population, 1)[0])
     
+#     @app.callback(
+#         Output('start', 'disabled'),
+#         Input('selection', 'value'), prevent_initial_call = True
+#     )
+#     def selection(n):
+#         False
     
     @app.callback(
         Output('start', 'disabled'),
-        Input('start', 'n_clicks'), prevent_initial_call = True
+        Input('start', 'n_clicks'),
+        Input('selection', 'value'), prevent_initial_call = True
     )
-    def start(n):
+    def start(n, value):
+        ctx = dash.callback_context
+        
+        if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'selection.value':
+            return False
+        
+#     @app.callback(
+#         Output('pause', 'disabled'),
+#         Input('pause', 'n_clicks'), prevent_initial_call = True
+#     )
+#     def pause(n):
+#         True
+        
+#     @app.callback(
+#         Output('stop', 'disabled'),
+#         Input('stop', 'n_clicks'), prevent_initial_call = True
+#     )
+#     def stop(n):
+#         True
+    
+#     @app.callback(
+#         Output('resume', 'disabled'),
+#         Input('resume', 'n_clicks'), prevent_initial_call = True
+#     )
+#     def resume(n):
+#         True
+        
+    def run_GA():
         global population, running
         population = configs.enc.initialize()
         population = configs.eval(population)
 
-        running = True
         while running:
             parents = configs.sel(population, configs.par_size)
             offspring = configs.pair(parents)
@@ -97,26 +141,6 @@ def create_app():
             offspring = configs.eval(offspring)
             population = configs.rep(np.concatenate((population, offspring), axis=0), 
                                      configs.pop_size)
-    
-        return False
-    
-    @app.callback(
-        Output('resume', 'disabled'),
-        Input('resume', 'n_clicks'), prevent_initial_call = True
-    )
-    def resume(n):
-        global population, running
-        
-        running = True
-        while running:
-            parents = configs.sel(population, configs.par_size)
-            offspring = configs.pair(parents)
-            offspring = configs.enc.mut(offspring)
-            offspring = configs.eval(offspring)
-            population = configs.rep(np.concatenate((population, offspring), axis=0), 
-                                     configs.pop_size)
-        
-        return False
     
         
     return app
