@@ -67,16 +67,16 @@ def create_app():
                                       disabled=True), 
                            dbc.Button(id='stop', 
                                       children='Stop',
-                                      disabled=False),
+                                      disabled=True),
                            dbc.Button(id='restart', 
                                       children='Restart',
-                                      disabled=False),
+                                      disabled=True),
                            dbc.Button(id='pause', 
                                       children='Pause',
-                                      disabled=False),
+                                      disabled=True),
                            dbc.Button(id='resume', 
                                       children='Resume',
-                                      disabled=False),
+                                      disabled=True),
                            dcc.Graph(id='custom'),
                            dcc.Interval(id='interval', 
                                         disabled=True)])
@@ -88,19 +88,27 @@ def create_app():
     def update_custom(n):
         return configs.vis(configs.sel(population, 1)[0])
     
-#     @app.callback(
-#         Output('start', 'disabled'),
-#         Input('selection', 'value'), prevent_initial_call = True
-#     )
-#     def selection(n):
-#         False
+    @app.callback(
+        Output('selection', 'disabled'),
+        Input('start','n_clicks'),
+        Input('stop','n_clicks'), prevent_initial_call = True
+        
+    )
+    def selection(startclicks, stopclicks):
+        ctx = dash.callback_context
+        
+        if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
+            return False 
+    
     
     @app.callback(
         Output('start', 'disabled'),
         Input('start', 'n_clicks'),
         Input('selection', 'value'), prevent_initial_call = True
     )
-    def start(n, value):
+    def start(startclicks, selectionvalue):
         ctx = dash.callback_context
         
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
@@ -108,26 +116,53 @@ def create_app():
         elif ctx.triggered[0]['prop_id'] == 'selection.value':
             return False
         
-#     @app.callback(
-#         Output('pause', 'disabled'),
-#         Input('pause', 'n_clicks'), prevent_initial_call = True
-#     )
-#     def pause(n):
-#         True
+    @app.callback(
+        Output('pause', 'disabled'),
+        Input('start', 'n_clicks'),
+        Input('resume', 'n_clicks'),
+        Input('pause', 'n_clicks'), prevent_initial_call = True
+    )
+    def pause(startclicks, resumeclicks, stopclicks):
+        ctx = dash.callback_context
         
-#     @app.callback(
-#         Output('stop', 'disabled'),
-#         Input('stop', 'n_clicks'), prevent_initial_call = True
-#     )
-#     def stop(n):
-#         True
+        if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
+            return False
+        elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
+            return False
+        
+    @app.callback(
+        Output('resume', 'disabled'),
+        Input('stop', 'n_clicks'),
+        Input('resume', 'n_clicks'),
+        Input('pause', 'n_clicks'), prevent_initial_call = True
+    )
+    def resume(stopclicks, resumeclicks, pauseclicks):
+        ctx = dash.callback_context
+        
+        if ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            return False
     
-#     @app.callback(
-#         Output('resume', 'disabled'),
-#         Input('resume', 'n_clicks'), prevent_initial_call = True
-#     )
-#     def resume(n):
-#         True
+    @app.callback(
+        Output('stop', 'disabled'),
+        Input('stop', 'n_clicks'),
+        Input('resume', 'n_clicks'),
+        Input('pause', 'n_clicks'), prevent_initial_call = True
+    )
+    def stop(stopclicks, resumeclicks, pauseclicks):
+        ctx = dash.callback_context
+        
+        if ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            return False
         
     def run_GA():
         global population, running
