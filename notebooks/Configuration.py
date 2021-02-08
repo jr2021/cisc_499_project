@@ -16,7 +16,7 @@ class Pairing:
         self.configs = configs
         
     def get_functions(self):
-        return [self.adjacent, self.random]
+        return ['adjacent']
 
     def adjacent(self, pars):
         offs = np.empty(shape=self.configs.off_size, dtype=dict)
@@ -38,7 +38,7 @@ class Single:
         self.configs = configs
         
     def get_functions(self):
-        return [self.rank_based, self.tournament]
+        return ['rank-based']
 
     def rank_based(self, pop, sel_size):
         if self.obs[0] == min:

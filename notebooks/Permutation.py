@@ -21,7 +21,7 @@ class Perm:
             self.configs, self.perm_configs = configs, perm_configs
             
         def get_functions(self):
-            return [self.order, self.cycle]
+            return ['order']
 
         def order(self, mother, father):
             x = np.random.randint(0, self.configs.gene_size)
@@ -50,7 +50,7 @@ class Perm:
             self.configs, self.perm_configs = configs, perm_configs
             
         def get_functions(self):
-            return [self.swap, self.scramble]
+            return ['swap']
 
         def swap(self, offs):
             for off in offs:
