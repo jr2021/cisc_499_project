@@ -33,7 +33,6 @@ def create_app():
         if n:
             configs.enc = Perm(configs)
             
-            
             return True, [dbc.Input(id='min-perm-val',
                                                    type='number',
                                                    value=0,
