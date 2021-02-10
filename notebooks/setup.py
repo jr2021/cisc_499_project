@@ -10,9 +10,7 @@ from Permutation import *
 import pickle
 
 
-def create_app():
-
-    configs = Config()
+def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server

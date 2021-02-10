@@ -10,6 +10,8 @@ from Permutation import *
 from plotly import graph_objects as go
 import pickle
 
+population = None
+
 def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -79,26 +81,27 @@ def create_app(configs):
                            dbc.Button(id='pause', 
                                       children='Pause',
                                       disabled=True),
-                           dbc.Button(id='resume', 
+                           dbc.Button(id='resume',
                                       children='Resume',
                                       disabled=True),
                            dcc.Graph(id='custom'),
                            dcc.Interval(id='interval', 
-                                        disabled=True)])
+                                        disabled=True),
+                           dcc.Store(id='running', data=False)])
         
     @app.callback(
         Output('custom', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_custom(n):
-        return configs.vis(configs.sel(population, 1)[0])
+        return configs.vis(configs.sel(population, 1)[0])    
     
     @app.callback(
         Output('pair_type', 'disabled'),
         Input('sel_type', 'value'), prevent_initial_call = True
     )
     def sel_sel(value): 
-        if value == 'rank_based':
+        if value == 'rank-based':
             configs.sel = configs.prob_type.rank_based
         return False
         
@@ -136,7 +139,7 @@ def create_app(configs):
         Input('rep_type', 'value'), prevent_initial_call = True
     )
     def rep_sel(value):
-        if value == 'rank_based':
+        if value == 'rank-based':
             configs.rep = configs.prob_type.rank_based
         
         return False
@@ -176,7 +179,6 @@ def create_app(configs):
         configs.mut_rate = value
         
         return False
-    
     
     @app.callback(
         Output('save', 'disabled'),
@@ -231,12 +233,24 @@ def create_app(configs):
     )
     def enable_pause(startclicks, resumeclicks, stopclicks):
         ctx = dash.callback_context
-        
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
             return False
         elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
+            return False
+        
+    @app.callback(
+        Output('interval', 'disabled'),
+        Input('pause', 'n_clicks'),
+        Input('start', 'n_clicks'),
+        Input('resume', 'n_clicks'), prevent_initial_call = True
+    )
+    def enable_interval(pauseclicks, startclicks, resumeclicks): 
+        ctx = dash.callback_context
+        if ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            return True
+        else:
             return False
         
     @app.callback(
@@ -270,19 +284,57 @@ def create_app(configs):
             return True
         elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
             return False
-        
-    def run_GA():
+       
+    @app.callback(
+        Output('start', 'children'),
+        Input('start', 'n_clicks'), prevent_initial_call = True
+    )
+    def start_GA(startclicks):
         global population, running
+        
         population = configs.enc.initialize()
         population = configs.eval(population)
 
+        running = True
         while running:
             parents = configs.sel(population, configs.par_size)
             offspring = configs.pair(parents)
             offspring = configs.enc.mut(offspring)
             offspring = configs.eval(offspring)
             population = configs.rep(np.concatenate((population, offspring), axis=0), 
-                                     configs.pop_size)
-    
+                                     configs.pop_size) 
+            
+        return 'Start'
+            
+    @app.callback(
+        Output('resume', 'children'),
+        Input('resume', 'n_clicks'), prevent_initial_call = True
+    )
+    def resume_GA(resumeclicks):
+        global population, running
+
+        running = True
+        while running:
+            parents = configs.sel(population, configs.par_size)
+            offspring = configs.pair(parents)
+            offspring = configs.enc.mut(offspring)
+            offspring = configs.eval(offspring)
+            population = configs.rep(np.concatenate((population, offspring), axis=0), 
+                                     configs.pop_size)  
+            
+        return 'Resume'
+            
+    @app.callback(
+        Output('pause', 'children'),
+        Input('pause', 'n_clicks'), prevent_initial_call = True
+    )
+    def pause_GA(pauseclicks):  
+        global running
         
+        running = False
+        
+        return 'Pause'
+    
+            
     return app
+

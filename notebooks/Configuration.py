@@ -4,7 +4,7 @@ from Permutation import Perm
 
 class Config:
     pop_size, par_size, off_size, gene_size = 5, None, None, None
-    prob_type, num_objs = None, 1
+    prob_type, num_objs, objs = None, 1, None
     enc = None
     pair, sel, eval, rep, vis = None, None, None, None, None
     mut_rate = None
@@ -33,7 +33,6 @@ class Pairing:
 
 class Single:
     configs = None
-    objs = None
 
     def __init__(self, configs):
         self.configs = configs
@@ -42,7 +41,7 @@ class Single:
         return ['rank-based']
 
     def rank_based(self, pop, sel_size):
-        if self.objs[0] == min:
+        if self.configs.objs[0] == min:
             return np.array(sorted(pop, key=lambda sol: sol['fitness'][0])[:sel_size])
         else:
             return np.array(sorted(pop, key=lambda sol: sol['fitness'][0], reverse=True)[:sel_size])
