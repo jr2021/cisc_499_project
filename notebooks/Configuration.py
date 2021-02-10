@@ -3,10 +3,11 @@ from Permutation import Perm
 
 
 class Config:
-    pop_size, par_size, off_size, gene_size = None, None, None, None
-    prob_type, num_objs = None, None
+    pop_size, par_size, off_size, gene_size = 5, None, None, None
+    prob_type, num_objs = None, 1
     enc = None
     pair, sel, eval, rep, vis = None, None, None, None, None
+    mut_rate = None
 
 
 class Pairing:
@@ -41,7 +42,7 @@ class Single:
         return ['rank-based']
 
     def rank_based(self, pop, sel_size):
-        if self.obs[0] == min:
+        if self.objs[0] == min:
             return np.array(sorted(pop, key=lambda sol: sol['fitness'][0])[:sel_size])
         else:
             return np.array(sorted(pop, key=lambda sol: sol['fitness'][0], reverse=True)[:sel_size])
@@ -57,7 +58,7 @@ class Multi:
         self.configs = configs
         
     def get_functions(self):
-        return [self.NSGA_II]
+        return ['nsga_ii']
 
     def NSGA_II(self, pop):
         pass
