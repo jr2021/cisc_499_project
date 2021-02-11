@@ -9,37 +9,40 @@ from Configuration import *
 from Permutation import *
 from plotly import graph_objects as go
 import pickle
+from threading import Thread
 
-population = None
+Population, Running, Configs = None, None, None
 
 def create_app(configs):
+    global Configs
+    Configs = configs
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
     app.layout = html.Div([dcc.Dropdown(id='sel_type',
                                         options=[{'label' : opt, 'value': opt} 
-                                                 for opt in configs.prob_type.get_functions()],
+                                                 for opt in Configs.prob_type.get_functions()],
                                         placeholder='Selection',
                                         disabled=False),
                            dcc.Dropdown(id='pair_type',
                                         options=[{'label' : opt, 'value': opt}
-                                                 for opt in Pairing(configs).get_functions()],
+                                                 for opt in Pairing(Configs).get_functions()],
                                         placeholder='Pairing',
                                         disabled=True),
                            dcc.Dropdown(id='rec_type',
                                         options=[{'label' : opt, 'value': opt}
-                                                 for opt in configs.enc.Recombination(configs,                                                                   configs.enc.configs).get_functions()],
+                                                 for opt in Configs.enc.Recombination(Configs,                                                                 configs.enc.configs).get_functions()],
                                         placeholder='Recombination',
                                         disabled=True),
                            dcc.Dropdown(id='mut_type',
                                         options=[{'label' : opt, 'value': opt}
-                                                 for opt in configs.enc.Mutation(configs,         
-                                                        configs.enc.configs).get_functions()],
+                                                 for opt in Configs.enc.Mutation(Configs,         
+                                                        Configs.enc.configs).get_functions()],
                                         placeholder='Mutation',
                                         disabled=True),
                             dcc.Dropdown(id='rep_type',
                                          options=[{'label' : opt, 'value': opt} 
-                                                  for opt in configs.prob_type.get_functions()],
+                                                  for opt in Configs.prob_type.get_functions()],
                                          placeholder='Replacement',
                                          disabled=True),
                            dcc.Input(id='pop_size', 
@@ -84,43 +87,53 @@ def create_app(configs):
                            dbc.Button(id='resume',
                                       children='Resume',
                                       disabled=True),
-                           dcc.Graph(id='custom'),
+                           dcc.Graph(id='custom',
+                                     figure=go.Figure()),
+                           dcc.Graph(id='heatmap',
+                                     figure=go.Figure()),
                            dcc.Interval(id='interval', 
-                                        disabled=True),
-                           dcc.Store(id='running', data=False)])
+                                        disabled=True,
+                                        interval=500)])
         
     @app.callback(
         Output('custom', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_custom(n):
-        return configs.vis(configs.sel(population, 1)[0])    
+        return Configs.vis(Configs.sel(Population, 1)[0])    
+    
+    @app.callback(
+        Output('heatmap', 'figure'),
+        Input('interval', 'n_intervals'), prevent_initial_call = True
+    )
+    def update_heatmap(n):
+        return go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])   
     
     @app.callback(
         Output('pair_type', 'disabled'),
         Input('sel_type', 'value'), prevent_initial_call = True
     )
-    def sel_sel(value): 
+    def enable_pair(value): 
         if value == 'rank-based':
-            configs.sel = configs.prob_type.rank_based
+            Configs.sel = Configs.prob_type.rank_based
         return False
         
     @app.callback(
         Output('rec_type', 'disabled'),
         Input('pair_type', 'value'), prevent_initial_call = True
     )
-    def pair_sel(value):
+    def enable_rec(value):
         if value == 'adjacent':
-            configs.pair = Pairing(configs).adjacent
+            Configs.pair = Pairing(configs).adjacent
         return False
         
     @app.callback(
         Output('mut_type', 'disabled'),
         Input('rec_type', 'value'), prevent_initial_call = True
     )
-    def rec_sel(value):
+    def enable_mut(value):
         if value == 'order':
-            configs.enc.rec = configs.enc.Recombination(configs, configs.enc.configs).order
+            Configs.enc.rec = Configs.enc.Recombination(Configs, Configs.enc.configs).order
             
         return False
         
@@ -128,9 +141,9 @@ def create_app(configs):
         Output('rep_type', 'disabled'),
         Input('mut_type', 'value'), prevent_initial_call = True
     )
-    def mut_sel(value):
+    def enable_rep(value):
         if value == 'swap':
-            configs.enc.mut = configs.enc.Mutation(configs, configs.enc.configs).swap
+            Configs.enc.mut = Configs.enc.Mutation(Configs, Configs.enc.configs).swap
         
         return False
     
@@ -138,9 +151,9 @@ def create_app(configs):
         Output('pop_size', 'disabled'),
         Input('rep_type', 'value'), prevent_initial_call = True
     )
-    def rep_sel(value):
+    def enable_pop_size(value):
         if value == 'rank-based':
-            configs.rep = configs.prob_type.rank_based
+            Configs.rep = Configs.prob_type.rank_based
         
         return False
     
@@ -148,8 +161,8 @@ def create_app(configs):
         Output('par_size', 'disabled'),
         Input('pop_size', 'value'), prevent_initial_call = True
     )
-    def pop_size(value):
-        configs.pop_size = value
+    def enable_par_size(value):
+        Configs.pop_size = value
         
         return False
     
@@ -157,8 +170,8 @@ def create_app(configs):
         Output('off_size', 'disabled'),
         Input('par_size', 'value'), prevent_initial_call = True
     )
-    def par_size(value):
-        configs.par_size = value
+    def enable_off_size(value):
+        Configs.par_size = value
         
         return False
     
@@ -166,8 +179,8 @@ def create_app(configs):
         Output('mut_rate', 'disabled'),
         Input('off_size', 'value'), prevent_initial_call = True
     )
-    def off_size(value):
-        configs.off_size = value
+    def enable_mut_rate(value):
+        Configs.off_size = value
         
         return False
     
@@ -176,7 +189,7 @@ def create_app(configs):
         Input('mut_rate', 'value'), prevent_initial_call = True
     )
     def mut_rate(value):
-        configs.mut_rate = value
+        Configs.mut_rate = value
         
         return False
     
@@ -194,7 +207,7 @@ def create_app(configs):
         Input('off_size', 'value'),
         Input('mut_rate', 'value'), prevent_initial_call = True
     )
-    def enable_save(saveclicks, stopclicks, selvalue, pairvalue, recvalue, mutratevalue, repvalue, popvalue, parvalue, offvalue, mutvalue):
+    def enable_save(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11):
         ctx = dash.callback_context
         if ctx.triggered[0]['prop_id'] == 'save.n_clicks':
             return True
@@ -219,7 +232,6 @@ def create_app(configs):
     )
     def enable_start(startclicks, saveclicks):
         ctx = dash.callback_context
-        
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
@@ -241,19 +253,6 @@ def create_app(configs):
             return False
         
     @app.callback(
-        Output('interval', 'disabled'),
-        Input('pause', 'n_clicks'),
-        Input('start', 'n_clicks'),
-        Input('resume', 'n_clicks'), prevent_initial_call = True
-    )
-    def enable_interval(pauseclicks, startclicks, resumeclicks): 
-        ctx = dash.callback_context
-        if ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
-            return True
-        else:
-            return False
-        
-    @app.callback(
         Output('resume', 'disabled'),
         Input('stop', 'n_clicks'),
         Input('resume', 'n_clicks'),
@@ -261,7 +260,6 @@ def create_app(configs):
     )
     def enable_resume(stopclicks, resumeclicks, pauseclicks):
         ctx = dash.callback_context
-        
         if ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
@@ -277,64 +275,62 @@ def create_app(configs):
     )
     def enable_stop(stopclicks, resumeclicks, pauseclicks):
         ctx = dash.callback_context
-        
         if ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
             return False
-       
-    @app.callback(
-        Output('start', 'children'),
-        Input('start', 'n_clicks'), prevent_initial_call = True
-    )
-    def start_GA(startclicks):
-        global population, running
         
-        population = configs.enc.initialize()
-        population = configs.eval(population)
-
-        running = True
-        while running:
-            parents = configs.sel(population, configs.par_size)
-            offspring = configs.pair(parents)
-            offspring = configs.enc.mut(offspring)
-            offspring = configs.eval(offspring)
-            population = configs.rep(np.concatenate((population, offspring), axis=0), 
-                                     configs.pop_size) 
-            
-        return 'Start'
-            
     @app.callback(
-        Output('resume', 'children'),
+        Output('interval', 'disabled'),
+        Input('pause', 'n_clicks'),
+        Input('start', 'n_clicks'),
         Input('resume', 'n_clicks'), prevent_initial_call = True
     )
-    def resume_GA(resumeclicks):
-        global population, running
+    def enable_interval(pauseclicks, startclicks, resumeclicks): 
+        global Running
+        
+        ctx = dash.callback_context
+        if ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            Running = [False]
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'start.n_clicks':
+            Running = [True]
+            Thread(target=start_GA, args=()).start()
+            return False    
+        elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
+            Running = [True]
+            Thread(target=resume_GA, args=()).start()
+            return False
 
-        running = True
-        while running:
-            parents = configs.sel(population, configs.par_size)
-            offspring = configs.pair(parents)
-            offspring = configs.enc.mut(offspring)
-            offspring = configs.eval(offspring)
-            population = configs.rep(np.concatenate((population, offspring), axis=0), 
-                                     configs.pop_size)  
-            
-        return 'Resume'
-            
-    @app.callback(
-        Output('pause', 'children'),
-        Input('pause', 'n_clicks'), prevent_initial_call = True
-    )
-    def pause_GA(pauseclicks):  
-        global running
-        
-        running = False
-        
-        return 'Pause'
-    
-            
     return app
 
+
+def start_GA():
+    global Population
+    
+    Population = Configs.enc.initialize()
+    Population = Configs.eval(Population)
+
+    while Running[0]:
+        parents = Configs.sel(Population, Configs.par_size)
+        offspring = Configs.pair(parents)
+        offspring = Configs.enc.mut(offspring)
+        offspring = Configs.eval(offspring)
+        Population = Configs.rep(np.concatenate((Population, offspring), axis=0), 
+                                 Configs.pop_size) 
+        print(Population)
+        
+def resume_GA():
+    global Population
+    
+    while Running[0]:
+        parents = Configs.sel(Population, Configs.par_size)
+        offspring = Configs.pair(parents)
+        offspring = Configs.enc.mut(offspring)
+        offspring = Configs.eval(offspring)
+        Population = Configs.rep(np.concatenate((Population, offspring), axis=0), 
+                                 Configs.pop_size) 
+    
+        print(Population)

@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class Perm:
     configs = None
@@ -54,9 +55,10 @@ class Perm:
 
         def swap(self, offs):
             for off in offs:
-                i = np.random.randint(low=0, high=self.configs.gene_size)
-                j = np.random.randint(low=0, high=self.configs.gene_size)
-                off['gene'][i], off['gene'][j] = off['gene'][j], off['gene'][i]
+                if random.uniform(0, 1) < self.configs.mut_rate:
+                    i = np.random.randint(low=0, high=self.configs.gene_size)
+                    j = np.random.randint(low=0, high=self.configs.gene_size)
+                    off['gene'][i], off['gene'][j] = off['gene'][j], off['gene'][i]
 
             return offs
 
