@@ -10,8 +10,9 @@ from Permutation import *
 from plotly import graph_objects as go
 import pickle
 from threading import Thread
+from Statistics import Statistics
 
-Population, Running, Configs = None, None, None
+Population, Running, Configs, Stats = None, None, None, None
 
 def create_app(configs):
     global Configs
@@ -22,56 +23,46 @@ def create_app(configs):
     app.layout = html.Div([dcc.Dropdown(id='sel_type',
                                         options=[{'label' : opt, 'value': opt} 
                                                  for opt in Configs.prob_type.get_functions()],
-                                        placeholder='Selection',
-                                        disabled=False),
+                                        placeholder='Selection'),
                            dcc.Dropdown(id='pair_type',
                                         options=[{'label' : opt, 'value': opt}
                                                  for opt in Pairing(Configs).get_functions()],
-                                        placeholder='Pairing',
-                                        disabled=True),
+                                        placeholder='Pairing'),
                            dcc.Dropdown(id='rec_type',
                                         options=[{'label' : opt, 'value': opt}
                                                  for opt in Configs.enc.Recombination(Configs,                                                                 configs.enc.configs).get_functions()],
-                                        placeholder='Recombination',
-                                        disabled=True),
+                                        placeholder='Recombination'),
                            dcc.Dropdown(id='mut_type',
                                         options=[{'label' : opt, 'value': opt}
                                                  for opt in Configs.enc.Mutation(Configs,         
                                                         Configs.enc.configs).get_functions()],
-                                        placeholder='Mutation',
-                                        disabled=True),
+                                        placeholder='Mutation'),
                             dcc.Dropdown(id='rep_type',
                                          options=[{'label' : opt, 'value': opt} 
                                                   for opt in Configs.prob_type.get_functions()],
-                                         placeholder='Replacement',
-                                         disabled=True),
+                                         placeholder='Replacement'),
                            dcc.Input(id='pop_size', 
                                      placeholder='Population Size',
                                      type='number', 
                                      min=4, max=128, 
-                                     step=2, 
-                                     disabled=True),
+                                     step=2),
                            dcc.Input(id='par_size', 
                                      placeholder='Num. Parents',
                                      type='number', 
                                      min=2, max=64, 
-                                     step=2, 
-                                     disabled=True),
+                                     step=2),
                            dcc.Input(id='off_size', 
                                      placeholder='Num. Offspring',
                                      type='number', 
                                      min=2, max=64, 
-                                     step=2, 
-                                     disabled=True),
+                                     step=2),
                            dcc.Input(id='mut_rate',
                                      placeholder='Mutation Rate',
                                      type='number', 
                                      min=0, max=1, 
-                                     step=0.1, 
-                                     disabled=True),
+                                     step=0.1),
                            dbc.Button(id='save', 
-                                      children='Save',
-                                      disabled=True), 
+                                      children='Save'), 
                            dbc.Button(id='start', 
                                       children='Start',
                                       disabled=True), 
@@ -93,149 +84,96 @@ def create_app(configs):
                                      figure=go.Figure()),
                            dcc.Interval(id='interval', 
                                         disabled=True,
-                                        interval=500)])
+                                        interval=500)] + [dcc.Graph(id='fitness_' + str(i),
+                                     figure=go.Figure()) for i in range(1, Configs.num_objs + 1)])
+        
+    
+    @app.callback(
+        Output('fitness_1', 'figure'),
+        Input('interval', 'n_intervals'), prevent_initial_call = True
+    )
+    def update_fitness_1(n):
+        fig = go.Figure()  
+        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['mins'][0], mode='lines', name='Min.'))
+        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['avgs'][0], mode='lines', name='Avg.'))
+        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['maxs'][0], mode='lines', name='Max.'))
+        fig.update_layout(title='Fitness Objective 1 Convergence', xaxis_title='Generations', yaxis_title=Configs.obj_names[0])
+        return fig
+        
         
     @app.callback(
         Output('custom', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_custom(n):
-        return Configs.vis(Configs.sel(Population, 1)[0])    
+        return Configs.vis(Configs.sel(Population, 1)[0])  
     
     @app.callback(
         Output('heatmap', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_heatmap(n):
-        return go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])   
-    
-    @app.callback(
-        Output('pair_type', 'disabled'),
-        Input('sel_type', 'value'), prevent_initial_call = True
-    )
-    def enable_pair(value): 
-        if value == 'rank-based':
-            Configs.sel = Configs.prob_type.rank_based
-        return False
-        
-    @app.callback(
-        Output('rec_type', 'disabled'),
-        Input('pair_type', 'value'), prevent_initial_call = True
-    )
-    def enable_rec(value):
-        if value == 'adjacent':
-            Configs.pair = Pairing(configs).adjacent
-        return False
-        
-    @app.callback(
-        Output('mut_type', 'disabled'),
-        Input('rec_type', 'value'), prevent_initial_call = True
-    )
-    def enable_mut(value):
-        if value == 'order':
-            Configs.enc.rec = Configs.enc.Recombination(Configs, Configs.enc.configs).order
-            
-        return False
-        
-    @app.callback(
-        Output('rep_type', 'disabled'),
-        Input('mut_type', 'value'), prevent_initial_call = True
-    )
-    def enable_rep(value):
-        if value == 'swap':
-            Configs.enc.mut = Configs.enc.Mutation(Configs, Configs.enc.configs).swap
-        
-        return False
-    
-    @app.callback(
-        Output('pop_size', 'disabled'),
-        Input('rep_type', 'value'), prevent_initial_call = True
-    )
-    def enable_pop_size(value):
-        if value == 'rank-based':
-            Configs.rep = Configs.prob_type.rank_based
-        
-        return False
-    
-    @app.callback(
-        Output('par_size', 'disabled'),
-        Input('pop_size', 'value'), prevent_initial_call = True
-    )
-    def enable_par_size(value):
-        Configs.pop_size = value
-        
-        return False
-    
-    @app.callback(
-        Output('off_size', 'disabled'),
-        Input('par_size', 'value'), prevent_initial_call = True
-    )
-    def enable_off_size(value):
-        Configs.par_size = value
-        
-        return False
-    
-    @app.callback(
-        Output('mut_rate', 'disabled'),
-        Input('off_size', 'value'), prevent_initial_call = True
-    )
-    def enable_mut_rate(value):
-        Configs.off_size = value
-        
-        return False
-    
-    @app.callback(
-        Output('sel_type', 'disabled'),
-        Input('mut_rate', 'value'), prevent_initial_call = True
-    )
-    def mut_rate(value):
-        Configs.mut_rate = value
-        
-        return False
+        fig = go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])   
+        fig.update_layout(title='Population Genotype Distribution', xaxis_title='Genotype', yaxis_title='Individual')
+        return fig
     
     @app.callback(
         Output('save', 'disabled'),
-        Input('save', 'n_clicks'),
-        Input('stop', 'n_clicks'),
-        Input('sel_type', 'value'),
-        Input('pair_type', 'value'),
-        Input('rec_type', 'value'),
-        Input('mut_type', 'value'),
-        Input('rep_type', 'value'),
-        Input('pop_size', 'value'),
-        Input('par_size', 'value'),
-        Input('off_size', 'value'),
-        Input('mut_rate', 'value'), prevent_initial_call = True
+        Input('start', 'n_clicks'),
+        Input('resume', 'n_clicks'),
+        Input('pause', 'n_clicks'),
+        Input('stop', 'n_clicks'), prevent_initial_call = True
     )
-    def enable_save(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11):
+    def enable_save(startclicks, resumeclicks, pauseclicks, stopclicks):
         ctx = dash.callback_context
-        if ctx.triggered[0]['prop_id'] == 'save.n_clicks':
+        if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
+            return True
+        elif ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
+            return False
+        elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'stop.n_clicks':
-            return False
-        elif ctx.triggered[0]['prop_id'] in ['prob_type.value', 
-                                             'sel_type.value', 
-                                             'pair_type.value', 
-                                             'rec_type.value', 
-                                             'mut_type.value', 
-                                             'rep_type.value', 
-                                             'pop_size.value', 
-                                             'par_size.value', 
-                                             'off_size.value', 
-                                             'mut_rate.value']:
             return False
     
     @app.callback(
         Output('start', 'disabled'),
         Input('start', 'n_clicks'),
-        Input('save', 'n_clicks'), prevent_initial_call = True
+        Input('save', 'n_clicks'),
+        State('resume', 'disabled'),
+        State('sel_type', 'value'),
+        State('pair_type', 'value'),
+        State('rec_type', 'value'),
+        State('mut_type', 'value'),
+        State('rep_type', 'value'),
+        State('pop_size', 'value'), 
+        State('par_size', 'value'), 
+        State('off_size', 'value'), 
+        State('mut_rate', 'value'), prevent_initial_call = True
     )
-    def enable_start(startclicks, saveclicks):
+    def enable_start(start_clicks, save_clicks, resume_dis, sel_type, pair_type, rec_type, mut_type, rep_type, pop_size, par_size, off_size, mut_rate):
         ctx = dash.callback_context
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
             return True
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
-            return False
+            if sel_type == 'rank-based':
+                Configs.sel = Configs.prob_type.rank_based
+            if pair_type == 'adjacent':
+                Configs.pair = Pairing(configs).adjacent    
+            if rec_type == 'order':
+                Configs.enc.rec = Configs.enc.Recombination(Configs, Configs.enc.configs).order
+            if mut_type == 'swap':
+                Configs.enc.mut = Configs.enc.Mutation(Configs, Configs.enc.configs).swap
+            if rep_type == 'rank-based':
+                Configs.rep = Configs.prob_type.rank_based
+            Configs.pop_size = pop_size
+            Configs.par_size = par_size
+            Configs.off_size = off_size
+            Configs.mut_rate = mut_rate
+            
+            if resume_dis == True:
+                return False
+            else:
+                return True
         
     @app.callback(
         Output('pause', 'disabled'),
@@ -293,14 +231,14 @@ def create_app(configs):
         
         ctx = dash.callback_context
         if ctx.triggered[0]['prop_id'] == 'pause.n_clicks':
-            Running = [False]
+            Running = False
             return True
         elif ctx.triggered[0]['prop_id'] == 'start.n_clicks':
-            Running = [True]
+            Running = True
             Thread(target=start_GA, args=()).start()
             return False    
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
-            Running = [True]
+            Running = True
             Thread(target=resume_GA, args=()).start()
             return False
 
@@ -308,29 +246,30 @@ def create_app(configs):
 
 
 def start_GA():
-    global Population
+    global Population, Stats
     
+    Stats = Statistics(Configs)
     Population = Configs.enc.initialize()
     Population = Configs.eval(Population)
 
-    while Running[0]:
+    while Running:
         parents = Configs.sel(Population, Configs.par_size)
         offspring = Configs.pair(parents)
         offspring = Configs.enc.mut(offspring)
         offspring = Configs.eval(offspring)
         Population = Configs.rep(np.concatenate((Population, offspring), axis=0), 
                                  Configs.pop_size) 
-        print(Population)
+        Stats.update_dynamic(Population)
         
 def resume_GA():
     global Population
     
-    while Running[0]:
+    while Running:
         parents = Configs.sel(Population, Configs.par_size)
         offspring = Configs.pair(parents)
         offspring = Configs.enc.mut(offspring)
         offspring = Configs.eval(offspring)
         Population = Configs.rep(np.concatenate((Population, offspring), axis=0), 
-                                 Configs.pop_size) 
-    
-        print(Population)
+                                 Configs.pop_size)
+        Stats.update_dynamic(Population)
+        

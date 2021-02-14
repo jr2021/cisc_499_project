@@ -4,7 +4,7 @@ from Permutation import Perm
 
 class Config:
     pop_size, par_size, off_size, gene_size = 5, None, None, None
-    prob_type, num_objs, objs = None, 1, None
+    prob_type, num_objs, objs, obj_names = None, None, None, None
     enc = None
     pair, sel, eval, rep, vis = None, None, None, None, None
     mut_rate = None
