@@ -6,29 +6,8 @@ class Config:
     pop_size, par_size, off_size, gene_size = 5, None, None, None
     prob_type, num_objs, objs, obj_names = None, None, None, None
     enc = None
-    pair, sel, eval, rep, vis = None, None, None, None, None
+    sel, eval, rep, vis = None, None, None, None
     mut_rate = None
-
-
-class Pairing:
-    configs = None
-
-    def __init__(self, configs):
-        self.configs = configs
-        
-    def get_functions(self):
-        return ['adjacent']
-
-    def adjacent(self, pars):
-        offs = np.empty(shape=self.configs.off_size, dtype=dict)
-
-        for i in range(0, self.configs.off_size - 1, 2):
-            offs[i], offs[i + 1] = self.configs.enc.rec(pars[i], pars[i + 1]), self.configs.enc.rec(pars[i + 1], pars[i])
-
-        return offs
-    
-    def random(self, pars):
-        pass
 
 
 class Single:

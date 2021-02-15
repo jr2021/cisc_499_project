@@ -25,10 +25,6 @@ def create_app(configs):
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.prob_type.get_functions()],
                                         placeholder='Selection'),
-                           dcc.Dropdown(id='pair_type',
-                                        options=[{'label': opt, 'value': opt}
-                                                 for opt in Pairing(Configs).get_functions()],
-                                        placeholder='Pairing'),
                            dcc.Dropdown(id='rec_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.enc.Recombination(Configs,
@@ -151,7 +147,6 @@ def create_app(configs):
         Input('save', 'n_clicks'),
         State('resume', 'disabled'),
         State('sel_type', 'value'),
-        State('pair_type', 'value'),
         State('rec_type', 'value'),
         State('mut_type', 'value'),
         State('rep_type', 'value'),
@@ -160,7 +155,7 @@ def create_app(configs):
         State('off_size', 'value'),
         State('mut_rate', 'value'), prevent_initial_call=True
     )
-    def enable_start(start_clicks, save_clicks, resume_dis, sel_type, pair_type, rec_type, mut_type, rep_type, pop_size,
+    def enable_start(start_clicks, save_clicks, resume_dis, sel_type, rec_type, mut_type, rep_type, pop_size,
                      par_size, off_size, mut_rate):
         ctx = dash.callback_context
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
@@ -168,8 +163,6 @@ def create_app(configs):
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
             if sel_type == 'rank-based':
                 Configs.sel = Configs.prob_type.rank_based
-            if pair_type == 'adjacent':
-                Configs.pair = Pairing(configs).adjacent
             if rec_type == 'order':
                 Configs.enc.rec = Configs.enc.Recombination(Configs, Configs.enc.configs).order
             if mut_type == 'swap':
@@ -265,7 +258,7 @@ def start_GA():
 
     while Running:
         parents = Configs.sel(Population, Configs.par_size)
-        offspring = Configs.pair(parents)
+        offspring = Configs.enc.rec(parents)
         offspring = Configs.enc.mut(offspring)
         offspring = Configs.eval(offspring)
         Population = Configs.rep(np.concatenate((Population, offspring), axis=0),
@@ -278,7 +271,7 @@ def resume_GA():
 
     while Running:
         parents = Configs.sel(Population, Configs.par_size)
-        offspring = Configs.pair(parents)
+        offspring = Configs.enc.rec(parents)
         offspring = Configs.enc.mut(offspring)
         offspring = Configs.eval(offspring)
         Population = Configs.rep(np.concatenate((Population, offspring), axis=0),

@@ -23,8 +23,19 @@ class Perm:
             
         def get_functions(self):
             return ['order']
+        
+        def order(self, pars):
+            offs = np.empty(shape=self.configs.off_size, dtype=dict)
+            
+            np.random.shuffle(pars)
 
-        def order(self, mother, father):
+            for i in range(0, self.configs.off_size - 1, 2):
+                offs[i] = self.order_crossover(pars[i], pars[i + 1])
+                offs[i + 1] = self.order_crossover(pars[i + 1], pars[i])
+                
+            return offs
+
+        def order_crossover(self, mother, father):
             x = np.random.randint(0, self.configs.gene_size)
             y = np.random.randint(0, self.configs.gene_size)
             off = {'gene': -np.ones(shape=self.configs.gene_size, dtype=np.int),
