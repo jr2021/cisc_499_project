@@ -4,14 +4,12 @@ import json
 
 
 class Statistics:
-
-    configs = None
-    gen_level = {'fitness': {'mins': [[], [], []],
-                                    'avgs': [[], [], []],
-                                    'maxs': [[], [], []]}}
     
     def __init__(self, configs):
         self.configs = configs
+        self.gen_level = {'fitness': {'mins': [[], [], []],
+                                    'avgs': [[], [], []],
+                                    'maxs': [[], [], []]}}
 
     def update_dynamic(self, population):
         self.set_mins(population)
