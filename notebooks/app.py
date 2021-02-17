@@ -14,7 +14,6 @@ from Statistics import Statistics
 
 Population, Running, Configs, Stats = None, None, None, None
 
-
 def create_app(configs):
     global Configs
     Configs = configs
