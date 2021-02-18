@@ -5,8 +5,10 @@ import json
 
 class Statistics:
     
-    def __init__(self, configs):
-        self.configs = configs
+    params = None
+    
+    def __init__(self, params):
+        self.params = params
         self.gen_level = {'fitness': {'mins': [[], [], []],
                                     'avgs': [[], [], []],
                                     'maxs': [[], [], []]}}
@@ -17,15 +19,15 @@ class Statistics:
         self.set_maxs(population)
 
     def set_mins(self, population):
-        for i in range(self.configs.num_objs):
+        for i in range(self.params['num_objs']):
             self.gen_level['fitness']['mins'][i].append(np.array([ind['fitness'][i] for ind in population]).min())
             
     def set_maxs(self, population):
-        for i in range(self.configs.num_objs):
+        for i in range(self.params['num_objs']):
             self.gen_level['fitness']['maxs'][i].append(np.array([ind['fitness'][i] for ind in population]).max())
         
     def set_avgs(self, population):
-        for i in range(self.configs.num_objs):
+        for i in range(self.params['num_objs']):
             self.gen_level['fitness']['avgs'][i].append(np.array([ind['fitness'][i] for ind in population]).mean())
         
 

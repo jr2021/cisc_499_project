@@ -5,8 +5,13 @@ import dash
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from jupyter_dash import JupyterDash
-from Configuration import *
-from Permutation import *
+from configuration import Config
+from single import Single
+from multi import Multi
+from permutation import Perm
+from integer import Integer
+from binary import Binary
+from real import Real
 import pickle
 
 global_min, global_max = 0, 100
@@ -136,24 +141,24 @@ def create_app(configs):
     )
     def save(n, prob_type, num_objs, obj_1_name, obj_2_name, obj_3_name, obj_1_goal, obj_2_goal, obj_3_goal, enc_type, gene_size, min_value, max_value):
         if prob_type == 'sing-obj':
-            configs.prob_type = Single(configs)
+            configs.params['prob_type'] = Single(configs.params)
         else:
-            configs.prob_type = Multi(configs)
-        configs.num_objs = num_objs
-        configs.objs, configs.obj_names = [], []
+            configs.params['prob_type'] = Multi(configs.params)
+        configs.params['num_objs'] = num_objs
+        configs.params['objs'], configs.params['obj_names'] = [], []
         
         dirs, names = [obj_1_goal, obj_2_goal, obj_3_goal], [obj_1_name, obj_2_name, obj_3_name]
-        for i in range(configs.num_objs):
+        for i in range(configs.params['num_objs']):
             if dirs[i] == 'min':
-                configs.objs.append(min)
+                configs.params['objs'].append(min)
             else:
-                configs.objs.append(max)
-            configs.obj_names.append(names[i])
+                configs.params['objs'].append(max)
+            configs.params['obj_names'].append(names[i])
         
         if enc_type == 'perm':
-            configs.enc = Perm(configs)
-        configs.gene_size = gene_size
-        configs.enc.min_value = min_value
-        configs.enc.max_value = max_value
+            configs.params['enc_type'] = Perm(configs.params)
+        configs.params['gene_size'] = gene_size
+        configs.params['enc_type'].params['min_value'] = min_value
+        configs.params['enc_type'].params['max_value'] = max_value
     
     return app

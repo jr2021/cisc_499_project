@@ -5,15 +5,13 @@ import dash_html_components as html
 import dash
 from dash.dependencies import Input, Output, State
 from jupyter_dash import JupyterDash
-from Configuration import *
-from Permutation import *
 from plotly import graph_objects as go
 import pickle
+import numpy as np
 from threading import Thread
-from Statistics import Statistics
+from statistics import Statistics
 
 Population, Running, Configs, Stats = None, None, None, None
-
 
 def create_app(configs):
     global Configs
@@ -23,21 +21,19 @@ def create_app(configs):
     server = app.server
     app.layout = html.Div([dcc.Dropdown(id='sel_type',
                                         options=[{'label': opt, 'value': opt}
-                                                 for opt in Configs.prob_type.get_functions()],
+                                                 for opt in Configs.params['prob_type'].get_functions()],
                                         placeholder='Selection'),
                            dcc.Dropdown(id='rec_type',
                                         options=[{'label': opt, 'value': opt}
-                                                 for opt in Configs.enc.Recombination(Configs,
-                                                                                      configs.enc.configs).get_functions()],
+                                                 for opt in Configs.params['enc_type'].Cross(Configs.params).get_functions()],
                                         placeholder='Recombination'),
                            dcc.Dropdown(id='mut_type',
                                         options=[{'label': opt, 'value': opt}
-                                                 for opt in Configs.enc.Mutation(Configs,
-                                                                                 Configs.enc.configs).get_functions()],
+                                                 for opt in Configs.params['enc_type'].Mutation(Configs.params).get_functions()],
                                         placeholder='Mutation'),
                            dcc.Dropdown(id='rep_type',
                                         options=[{'label': opt, 'value': opt}
-                                                 for opt in Configs.prob_type.get_functions()],
+                                                 for opt in Configs.params['prob_type'].get_functions()],
                                         placeholder='Replacement'),
                            dbc.Input(id='pop_size',
                                      placeholder='Population Size',
@@ -58,7 +54,7 @@ def create_app(configs):
                                      placeholder='Mutation Rate',
                                      type='number',
                                      min=0, max=1,
-                                     step=0.1),
+                                     step=0.01),
                            dbc.Button(id='save',
                                       children='Save'),
                            dbc.Button(id='start',
@@ -84,7 +80,7 @@ def create_app(configs):
                                         disabled=True,
                                         interval=500)] + [dcc.Graph(id='fitness_' + str(i),
                                                                     figure=go.Figure()) for i in
-                                                          range(1, Configs.num_objs + 1)])
+                                                          range(1, Configs.params['num_objs'] + 1)])
 
     @app.callback(
         Output('fitness_1', 'figure'),
@@ -103,7 +99,7 @@ def create_app(configs):
                                  name='Max.'))
         fig.update_layout(title='Fitness Objective 1 Convergence',
                           xaxis_title='Generations',
-                          yaxis_title=Configs.obj_names[0])
+                          yaxis_title=Configs.params['obj_names'][0])
         return fig
 
     @app.callback(
@@ -111,7 +107,7 @@ def create_app(configs):
         Input('interval', 'n_intervals'), prevent_initial_call=True
     )
     def update_custom(n):
-        return Configs.vis(Configs.sel(Population, 1)[0])
+        return Configs.params['cust_vis'](Configs.params['sel_type'](Population, 1)[0])
 
     @app.callback(
         Output('heatmap', 'figure'),
@@ -162,17 +158,29 @@ def create_app(configs):
             return True
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
             if sel_type == 'rank-based':
-                Configs.sel = Configs.prob_type.rank_based
+                Configs.params['sel_type'] = Configs.params['prob_type'].rank_based
+                
+            # add other parent selection options here
+            
             if rec_type == 'order':
-                Configs.enc.rec = Configs.enc.Recombination(Configs, Configs.enc.configs).order
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).order
+                
+            # add other crossover options here
+            
             if mut_type == 'swap':
-                Configs.enc.mut = Configs.enc.Mutation(Configs, Configs.enc.configs).swap
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).swap
+                
+            # add other mutation options here
+            
             if rep_type == 'rank-based':
-                Configs.rep = Configs.prob_type.rank_based
-            Configs.pop_size = pop_size
-            Configs.par_size = par_size
-            Configs.off_size = off_size
-            Configs.mut_rate = mut_rate
+                Configs.params['rep_type'] = Configs.params['prob_type'].rank_based
+                
+            # add other survivor selection options here
+            
+            Configs.params['pop_size'] = pop_size
+            Configs.params['par_size'] = par_size
+            Configs.params['off_size'] = off_size
+            Configs.params['mut_rate'] = mut_rate
 
             if resume_dis == True:
                 return False
@@ -238,11 +246,9 @@ def create_app(configs):
             Running = False
             return True
         elif ctx.triggered[0]['prop_id'] == 'start.n_clicks':
-            Running = True
             Thread(target=start_GA, args=()).start()
             return False
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
-            Running = True
             Thread(target=resume_GA, args=()).start()
             return False
 
@@ -250,30 +256,32 @@ def create_app(configs):
 
 
 def start_GA():
-    global Population, Stats
+    global Population, Stats, Running
 
-    Stats = Statistics(Configs)
-    Population = Configs.enc.initialize()
-    Population = Configs.eval(Population)
+    Stats = Statistics(Configs.params)
+    Population = Configs.params['enc_type'].initialize()
+    Population = Configs.params['cust_eval'](Population)
 
+    Running = True
     while Running:
-        parents = Configs.sel(Population, Configs.par_size)
-        offspring = Configs.enc.rec(parents)
-        offspring = Configs.enc.mut(offspring)
-        offspring = Configs.eval(offspring)
-        Population = Configs.rep(np.concatenate((Population, offspring), axis=0),
-                                 Configs.pop_size)
+        parents = Configs.params['sel_type'](Population, Configs.params['par_size'])
+        offspring = Configs.params['enc_type'].mate(parents)
+        offspring = Configs.params['enc_type'].params['mut_type'](offspring)
+        offspring = Configs.params['cust_eval'](offspring)
+        Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
+                                 Configs.params['pop_size'])
         Stats.update_dynamic(Population)
 
 
 def resume_GA():
-    global Population
+    global Population, Running
 
+    Running = True
     while Running:
-        parents = Configs.sel(Population, Configs.par_size)
-        offspring = Configs.enc.rec(parents)
-        offspring = Configs.enc.mut(offspring)
-        offspring = Configs.eval(offspring)
-        Population = Configs.rep(np.concatenate((Population, offspring), axis=0),
-                                 Configs.pop_size)
+        parents = Configs.params['sel_type'](Population, Configs.params['par_size'])
+        offspring = Configs.params['enc_type'].mate(parents)
+        offspring = Configs.params['enc_type'].params['mut_type'](offspring)
+        offspring = Configs.params['cust_eval'](offspring)
+        Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
+                                 Configs.params['pop_size'])
         Stats.update_dynamic(Population)
