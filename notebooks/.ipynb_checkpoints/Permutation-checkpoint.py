@@ -9,19 +9,19 @@ class Perm:
         self.params['rec_type'], self.params['mut_type'] = None, None
 
     def initialize(self):
-        return np.array([{'gene': np.random.permutation(np.arange(start=self.params['min_value'], 
-                                stop=self.params['max_value'] + 1)),
+        return np.array([{'gene': np.random.permutation(x=np.arange(start=self.params['min_value'],
+                                                                    stop=self.params['max_value'] + 1)),
                           'fitness': np.array([0 for _ in range(self.params['num_objs'])])} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
         offs = np.empty(shape=self.params['off_size'], dtype=dict)
-
-        np.random.shuffle(pars)
-
+        
         for i in range(0, self.params['off_size'] - 1, 2):
-            offs[i] = self.params['rec_type'](pars[i], pars[i + 1])
-            offs[i + 1] = self.params['rec_type'](pars[i + 1], pars[i])
+            j = np.random.randint(low=0, high=self.params['par_size'])
+            k = np.random.randint(low=0, high=self.params['par_size'])
+            offs[i] = self.params['rec_type'](pars[j], pars[k])
+            offs[i + 1] = self.params['rec_type'](pars[k], pars[j])
 
         return offs
     
@@ -35,9 +35,9 @@ class Perm:
             return ['order']
 
         def order(self, mother, father):
-            x = np.random.randint(0, self.params['gene_size'])
-            y = np.random.randint(0, self.params['gene_size'])
-            off = {'gene': -np.ones(shape=self.params['gene_size'], dtype=np.int),
+            x = np.random.randint(low=0, high=self.params['gene_size'])
+            y = np.random.randint(low=0, high=self.params['gene_size'])
+            off = {'gene': np.empty(shape=self.params['gene_size']),
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
 
             off['gene'][min(x, y):max(x, y)] = mother['gene'][min(x, y):max(x, y)]
