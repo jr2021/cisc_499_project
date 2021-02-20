@@ -9,9 +9,10 @@ class Perm:
         self.params['rec_type'], self.params['mut_type'] = None, None
 
     def initialize(self):
-        return np.array([{'gene': np.random.permutation(x=np.arange(start=self.params['min_value'],
+        return np.array([{'gene': np.random.permutation(np.arange(start=self.params['min_value'],
                                                                     stop=self.params['max_value'] + 1)),
-                          'fitness': np.array([0 for _ in range(self.params['num_objs'])])} 
+                          'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
+                          'meta': self.params['gene_meta']} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -37,7 +38,7 @@ class Perm:
         def order(self, mother, father):
             x = np.random.randint(low=0, high=self.params['gene_size'])
             y = np.random.randint(low=0, high=self.params['gene_size'])
-            off = {'gene': np.empty(shape=self.params['gene_size']),
+            off = {'gene': -np.ones(shape=self.params['gene_size'], dtype=int),
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
 
             off['gene'][min(x, y):max(x, y)] = mother['gene'][min(x, y):max(x, y)]

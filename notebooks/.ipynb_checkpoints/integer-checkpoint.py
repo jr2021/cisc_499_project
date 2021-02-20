@@ -14,7 +14,8 @@ class Integer:
         return np.array([{'gene': np.random.randint(low=self.params['min_value'], 
                                                     high=self.params['max_value'], 
                                                     size=self.configs.gene),
-                          'fitness': np.array([0 for _ in range(self.params['num_objs'])])} 
+                          'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
+                          'meta': self.params['gene_meta']} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):

@@ -12,7 +12,8 @@ class Binary:
 
     def initialize(self):
         return np.array([{'gene': np.random.randint(low=0, high=2, size=self.configs.gene),
-                          'fitness': np.array([0 for _ in range(self.params['num_objs'])])} 
+                          'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
+                          'meta': self.params['gene_meta']} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
