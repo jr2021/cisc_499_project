@@ -10,6 +10,7 @@ import pickle
 import numpy as np
 from threading import Thread
 from statistics import Statistics
+from single import Single
 
 Population, Running, Configs, Stats = None, None, None, None
 
@@ -107,7 +108,16 @@ def create_app(configs):
         Input('interval', 'n_intervals'), prevent_initial_call=True
     )
     def update_custom(n):
-        return Configs.params['cust_vis'](Configs.params['sel_type'](Population, 1)[0])
+        if Configs.params['num_objs'] == 1:
+            best = Configs.params['prob_type'].rank_based(Population, 
+                                                             Configs.params['pop_size'], 
+                                                             1)[0]
+        else:
+            best = Configs.params['prob_type'].NSGA_II(Population,
+                                                          Configs.params['pop_size'],
+                                                          1)[0]
+        return Configs.params['cust_vis'](best)
+            
 
     @app.callback(
         Output('heatmap', 'figure'),
@@ -264,12 +274,15 @@ def start_GA():
 
     Running = True
     while Running:
-        parents = Configs.params['sel_type'](Population, Configs.params['par_size'])
+        parents = Configs.params['sel_type'](Population, 
+                                             Configs.params['pop_size'],
+                                             Configs.params['par_size'])
         offspring = Configs.params['enc_type'].mate(parents)
         offspring = Configs.params['enc_type'].params['mut_type'](offspring)
         offspring = Configs.params['cust_eval'](offspring)
         Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
-                                 Configs.params['pop_size'])
+                                                Configs.params['pop_size'] + Configs.params['off_size'],
+                                                Configs.params['pop_size'])
         Stats.update_dynamic(Population)
 
 
@@ -278,10 +291,13 @@ def resume_GA():
 
     Running = True
     while Running:
-        parents = Configs.params['sel_type'](Population, Configs.params['par_size'])
+        parents = Configs.params['sel_type'](Population, 
+                                             Configs.params['pop_size'],
+                                             Configs.params['par_size'])
         offspring = Configs.params['enc_type'].mate(parents)
         offspring = Configs.params['enc_type'].params['mut_type'](offspring)
         offspring = Configs.params['cust_eval'](offspring)
         Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
-                                 Configs.params['pop_size'])
+                                                Configs.params['pop_size'] + Configs.params['off_size'], 
+                                                Configs.params['pop_size'])
         Stats.update_dynamic(Population)
