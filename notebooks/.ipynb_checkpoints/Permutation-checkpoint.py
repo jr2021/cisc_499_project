@@ -33,18 +33,19 @@ class Perm:
             self.params = params
             
         def get_functions(self):
-            return ['order']
+            return ['order', 'partially-mapped']
 
         def order(self, mother, father):
             x = np.random.randint(low=0, high=self.params['gene_size'])
-            y = np.random.randint(low=0, high=self.params['gene_size'])
+            y = np.random.randint(low=x, high=self.params['gene_size'])
             off = {'gene': -np.ones(shape=self.params['gene_size'], dtype=int),
+                   'meta': self.params['gene_meta'],
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
 
-            off['gene'][min(x, y):max(x, y)] = mother['gene'][min(x, y):max(x, y)]
+            off['gene'][x:y] = mother['gene'][x:y]
 
-            j, k = max(x, y) - self.params['gene_size'], max(x, y) - self.params['gene_size']
-            while j < min(x, y):
+            j, k = y - self.params['gene_size'], y - self.params['gene_size']
+            while j < x:
                 if father['gene'][k] not in off['gene']:
                     off['gene'][j] = father['gene'][k]
                     j += 1
@@ -52,8 +53,29 @@ class Perm:
 
             return off
 
-        def cycle(self, mother, father):
-            pass
+        def PMX(self, mother, father):
+            x = np.random.randint(low=0, high=self.params['gene_size'])
+            y = np.random.randint(low=x, high=self.params['gene_size'])
+            
+            off = {'gene': -np.ones(shape=self.params['gene_size'], dtype=int),
+                   'meta': self.params['gene_meta'],
+                   'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
+
+            off['gene'][x:y] = mother['gene'][x:y]
+
+            for i in range(x, y):
+                if father['gene'][i] not in off['gene']:
+                    k = i
+                    while off['gene'][k] != -1:
+                        j = off['gene'][k]
+                        k = np.where(father['gene'] == j)
+                    off['gene'][k] = father['gene'][i]
+
+            for i in range(self.params['gene_size']):
+                if off['gene'][i] == -1:
+                    off['gene'][i] = father['gene'][i]
+
+            return off
 
     class Mutation:
         params = None
@@ -62,7 +84,7 @@ class Perm:
             self.params = params
             
         def get_functions(self):
-            return ['swap']
+            return ['swap', 'scramble']
 
         def swap(self, offs):
             for off in offs:
@@ -70,5 +92,15 @@ class Perm:
                     if np.random.uniform(low=0, high=1) < self.params['mut_rate']:
                         j = np.random.randint(low=0, high=self.params['gene_size'])
                         off['gene'][i], off['gene'][j] = off['gene'][j], off['gene'][i]
+
+            return offs
+        
+        def scramble(self, offs):
+            for off in offs:
+                for i in range(self.params['gene_size']):
+                    if np.random.uniform(low=0, high=1) < self.params['mut_rate']:
+                        j = np.random.randint(low=0, high=self.params['gene_size'])
+                        k = np.random.randint(low=j, high=self.params['gene_size']) 
+                        np.random.shuffle(off['gene'][j:k])
 
             return offs

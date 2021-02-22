@@ -57,6 +57,7 @@ class Binary:
             off['gene'][points[-1]:] = parent['gene'][points[-1]:]
                     
             return off
+            
 
     class Mutation:
         params = None
