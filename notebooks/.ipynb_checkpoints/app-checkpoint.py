@@ -14,9 +14,9 @@ from single import Single
 
 Population, Running, Configs, Stats = None, None, None, None
 
-def create_app(configs):
-    global Configs
-    Configs = configs
+def create_app(configs, stats):
+    global Configs, Stats
+    Configs, Stats = configs, stats
 
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
@@ -75,7 +75,7 @@ def create_app(configs):
                                       disabled=True),
                            dcc.Graph(id='custom',
                                      figure=go.Figure()),
-                           dcc.Graph(id='heatmap',
+                           dcc.Graph(id='curr_pop',
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
                                         disabled=True,
@@ -89,13 +89,13 @@ def create_app(configs):
     )
     def update_fitness_1(n):
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['mins'][0],
+        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['mins'][0],
                                  mode='lines',
                                  name='Min.'))
-        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['avgs'][0],
+        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['avgs'][0],
                                  mode='lines',
                                  name='Avg.'))
-        fig.add_trace(go.Scatter(y=Stats.gen_level['fitness']['maxs'][0],
+        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['maxs'][0],
                                  mode='lines',
                                  name='Max.'))
         fig.update_layout(title='Fitness Objective 1 Convergence',
@@ -103,27 +103,27 @@ def create_app(configs):
                           yaxis_title=Configs.params['obj_names'][0])
         return fig
 
-    @app.callback(
-        Output('custom', 'figure'),
-        Input('interval', 'n_intervals'), prevent_initial_call=True
-    )
-    def update_custom(n):
-        if Configs.params['num_objs'] == 1:
-            best = Configs.params['prob_type'].rank_based(Population, 
-                                                             Configs.params['pop_size'], 
-                                                             1)[0]
-        else:
-            best = Configs.params['prob_type'].NSGA_II(Population,
-                                                          Configs.params['pop_size'],
-                                                          1)[0]
-        return Configs.params['cust_vis'](best)
+#     @app.callback(
+#         Output('custom', 'figure'),
+#         Input('interval', 'n_intervals'), prevent_initial_call=True
+#     )
+#     def update_custom(n):
+#         if Configs.params['num_objs'] == 1:
+#             best = Configs.params['prob_type'].rank_based(Population, 
+#                                                              Configs.params['pop_size'], 
+#                                                              1)[0]
+#         else:
+#             best = Configs.params['prob_type'].NSGA_II(Population,
+#                                                           Configs.params['pop_size'],
+#                                                           1)[0]
+#         return Configs.params['cust_vis'](Configs, best)
             
 
     @app.callback(
-        Output('heatmap', 'figure'),
+        Output('curr_pop', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call=True
     )
-    def update_heatmap(n):
+    def update_curr_pop(n):
         fig = go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])
         fig.update_layout(title='Population Genotype Distribution',
                           xaxis_title='Genotype', yaxis_title='Individual')
@@ -169,21 +169,52 @@ def create_app(configs):
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
             if sel_type == 'rank-based':
                 Configs.params['sel_type'] = Configs.params['prob_type'].rank_based
+            elif sel_type == 'tournament':
+                Configs.params['sel_type'] = Configs.params['prob_type'].tournament
+            elif sel_type == 'NSGA-II':
+                Configs.params['sel_type'] = Configs.params['prob_type'].NSGA_II
                 
             # add other parent selection options here
             
             if rec_type == 'order':
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).order
+            elif rec_type == 'partially-mapped':
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).PMX
+            elif rec_type == 'whole_arithmetic':
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).whole_arithmetic
+            elif rec_type == 'simple_arithmetic':
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).simple_arithmetic
+            elif rec_type == 'n-point':
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).n_point
+            elif rec_type == 'uniform':
+                Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).uniform
                 
             # add other crossover options here
             
             if mut_type == 'swap':
                 Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).swap
-                
+            elif mut_type == 'scramble':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).scramble
+            elif mut_type == 'uniform':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).uniform
+            elif mut_type == 'non-uniform':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).non_uniform
+            elif mut_type == 'random-resetting':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).random_resetting
+            elif mut_type == 'creep':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).creep
+            elif mut_type == 'bit-flip':
+                Configs.params['enc_type'].params['mut_type'] = Configs.params['enc_type'].Mutation(Configs.params).bit_flip
+            
+            
             # add other mutation options here
             
             if rep_type == 'rank-based':
                 Configs.params['rep_type'] = Configs.params['prob_type'].rank_based
+            elif rep_type == 'tournament':
+                Configs.params['rep_type'] = Configs.params['prob_type'].tournament
+            elif rep_type == 'NSGA-II':
+                Configs.params['rep_type'] = Configs.params['prob_type'].NSGA_II
                 
             # add other survivor selection options here
             
@@ -266,11 +297,11 @@ def create_app(configs):
 
 
 def start_GA():
-    global Population, Stats, Running
+    global Population, Running
 
-    Stats = Statistics(Configs.params)
+    Stats.clear()
     Population = Configs.params['enc_type'].initialize()
-    Population = Configs.params['cust_eval'](Population)
+    Population = Configs.params['eval_type'](Configs, Population)
 
     Running = True
     while Running:
@@ -279,11 +310,13 @@ def start_GA():
                                              Configs.params['par_size'])
         offspring = Configs.params['enc_type'].mate(parents)
         offspring = Configs.params['enc_type'].params['mut_type'](offspring)
-        offspring = Configs.params['cust_eval'](offspring)
+        offspring = Configs.params['eval_type'](Configs, offspring)
         Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
                                                 Configs.params['pop_size'] + Configs.params['off_size'],
                                                 Configs.params['pop_size'])
         Stats.update_dynamic(Population)
+    
+    Stats.update_static(Population)
 
 
 def resume_GA():
@@ -296,8 +329,10 @@ def resume_GA():
                                              Configs.params['par_size'])
         offspring = Configs.params['enc_type'].mate(parents)
         offspring = Configs.params['enc_type'].params['mut_type'](offspring)
-        offspring = Configs.params['cust_eval'](offspring)
+        offspring = Configs.params['eval_type'](Configs, offspring)
         Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
                                                 Configs.params['pop_size'] + Configs.params['off_size'], 
                                                 Configs.params['pop_size'])
         Stats.update_dynamic(Population)
+        
+    Stats.update_static(Population)

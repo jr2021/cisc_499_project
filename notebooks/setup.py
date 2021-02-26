@@ -13,6 +13,8 @@ from integer import Integer
 from binary import Binary
 from real import Real
 import pickle
+from evaluate import *
+from visualize import *
 
 global_min, global_max = 0, 100
 
@@ -20,7 +22,20 @@ def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
-    app.layout = html.Div([dcc.Dropdown(id='prob_type',
+    app.layout = html.Div([dcc.Markdown('''### Choose a predefined problem'''), 
+                           dcc.Dropdown(id='pre_probs', 
+                                        options=[{'label': 'Traveling salesperson', 
+                                                  'value': 'trav'},
+                                                 {'label': 'Knapsack', 
+                                                  'value': 'knap'},
+                                                 {'label': 'Integer Equation solver', 
+                                                  'value': 'int-solv'},
+                                                 {'label': 'Real-Valued Equation solver', 
+                                                  'value': 'real-solv'}]),
+                           dbc.Button(id='save_pre', 
+                                      children='Save predefined problem'),
+                           dcc.Markdown('''### Create a custom problem'''),
+                           dcc.Dropdown(id='prob_type',
                                         options=[{'label': 'single-objective', 
                                                   'value': 'sing-obj'},
                                                  {'label': 'multi-objective', 
@@ -73,8 +88,8 @@ def create_app(configs):
                                      placeholder='Maximum Value',
                                      type='number', 
                                      min=0, max=100),
-                           dbc.Button(id='save', 
-                                      children='Save static parameters')])   
+                           dbc.Button(id='save_cust', 
+                                      children='Save custom problem')])   
     
     
     @app.callback(
@@ -123,9 +138,57 @@ def create_app(configs):
                 return 0, gene_size - 1
         return min_val, max_val      
     
+    
     @app.callback(
-         Output('save', 'disabled'),
-         Input('save', 'n_clicks'),
+         Output('save_pre', 'children'),
+         Input('save_pre', 'n_clicks'),
+         State('pre_probs', 'value'), prevent_initial_call=True
+    )
+    def save_pre(n, pre_prob):
+        configs.params['prob_type'] = Single(configs.params)
+        configs.params['num_objs'] = 1
+        
+        if pre_prob == 'trav':
+            configs.params['objs'] = [min]
+            configs.params['obj_names'] = ['Distance']
+            configs.params['enc_type'] = Perm(configs.params)
+            configs.params['gene_size'] = 64
+            configs.params['enc_type'].params['min_value'] = 0
+            configs.params['enc_type'].params['max_value'] = 63
+            configs.params['eval_type'] = TSP
+            configs.params['cust_vis'] = network
+        elif pre_prob == 'knap':
+            configs.params['prob_type'] = Multi(configs.params)
+            configs.params['num_objs'] = 2
+            configs.params['objs'] = [max, min]
+            configs.params['obj_names'] = ['Value', 'Weight']
+            configs.params['enc_type'] = Binary(configs.params)
+            configs.params['gene_size'] = 64
+            configs.params['enc_type'].params['min_value'] = 0
+            configs.params['enc_type'].params['max_value'] = 1
+            configs.params['eval_type'] = knapsack
+            configs.params['cust_vis'] = empty
+            configs.params['n'] = 8
+        elif pre_prob == 'int-solver':
+            configs.params['objs'] = [min]
+            configs.params['obj_names'] = ['Error']
+            configs.params['enc_type'] = Integer(configs.params)
+            configs.params['gene_size'] = 16
+            configs.params['enc_type'].params['min_value'] = 0
+            configs.params['enc_type'].params['max_value'] = 100
+        elif pre_prob == 'real-solver':
+            configs.params['objs'] = [min]
+            configs.params['obj_names'] = ['Error']
+            configs.params['enc_type'] = Integer(configs.params)
+            configs.params['gene_size'] = 16
+            configs.params['enc_type'].params['min_value'] = 0
+            configs.params['enc_type'].params['max_value'] = 100
+        
+        return 'Saved'
+    
+    @app.callback(
+         Output('save_cust', 'children'),
+         Input('save_cust', 'n_clicks'),
          State('prob_type', 'value'),
          State('num_objs', 'value'),
          State('obj_1_name', 'value'),
@@ -160,5 +223,8 @@ def create_app(configs):
         configs.params['gene_size'] = gene_size
         configs.params['enc_type'].params['min_value'] = min_value
         configs.params['enc_type'].params['max_value'] = max_value
+        
+        return 'Saved'
     
     return app
+

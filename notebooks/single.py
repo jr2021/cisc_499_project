@@ -6,7 +6,7 @@ class Single:
 
     def __init__(self, params):
         self.params = params
-        self.params['gene_meta'] = None
+        self.params['gene_meta'] = {}
         self.params['tourn_size'] = 4 # must be less than par_size and pop_size
 
         

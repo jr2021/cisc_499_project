@@ -9,6 +9,7 @@ class Integer:
         self.params['min_value'], self.params['max_value'] = None, None
         self.params['rec_type'], self.params['mut_type'] = None, None
         self.params['n'] = None
+        self.params['theta'] = None
 
     def initialize(self):
         return np.array([{'gene': np.random.randint(low=self.params['min_value'], 
@@ -36,10 +37,11 @@ class Integer:
             self.params = params
             
         def get_functions(self):
-            return ['n-point']
+            return ['n-point', 'uniform']
 
         def n_point(self, mother, father):
             off = {'gene': np.empty(size=self.params['gene_size']),
+                   'meta': self.params['gene_meta'],
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             points = np.sort(np.random.choice(a=self.params['gene_size'], 
@@ -59,6 +61,19 @@ class Integer:
             off['gene'][points[-1]:] = parent['gene'][points[-1]:]
                     
             return off
+        
+        def uniform(self, mother, father):
+            off = {'gene': np.empty(size=self.params['gene_size']),
+                   'meta': self.params['gene_meta'],
+                   'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
+            
+            for i in range(self.params['gene_size']):
+                if np.random.uniform() < 0.5:
+                    off['gene'][i] = mother['gene'][i]
+                else:
+                    off['gene'][i] = father['gene'][i]
+                    
+            return off
 
     class Mutation:
         params = None
@@ -67,7 +82,7 @@ class Integer:
             self.params = params
             
         def get_functions(self):
-            return ['random-resetting']
+            return ['random-resetting', 'creep']
 
         def random_resetting(self, offs):
             for off in offs:
@@ -76,4 +91,16 @@ class Integer:
                         off['gene'][i] = np.random.uniform(low=self.params['min_value'],
                                                            high=self.params['max_value'])
                         
+            return offs
+        
+        def creep(self, offs):
+            for off in offs:
+                for i in range(self.params['gene_size']):
+                    if np.random.uniform(low=0, high=1) < self.params['mut_rate']:
+                        value = np.round(np.random.normal(loc=0, scale=self.params['theta']))
+                        if value > 0:
+                            off['gene'][i] = min(off['gene'][i] + value, self.params['max_value'])
+                        else:
+                            off['gene'][i] = max(off['gene'][i] + value, self.params['max_value'])
+            
             return offs
