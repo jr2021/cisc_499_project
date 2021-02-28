@@ -1,4 +1,3 @@
-
 import numpy as np
 
 class Binary:
@@ -64,7 +63,6 @@ class Binary:
             
         def uniform(self, mother, father):
             off = {'gene': np.empty(shape=self.params['gene_size'], dtype=int),
-                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             for i in range(self.params['gene_size']):

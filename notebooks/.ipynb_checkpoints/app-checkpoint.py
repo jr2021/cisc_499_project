@@ -75,8 +75,8 @@ def create_app(configs, stats):
                            dbc.Button(id='resume',
                                       children='Resume',
                                       disabled=True),
-                           dcc.Graph(id='custom',
-                                     figure=go.Figure()),
+                           html.Div(id='custom',
+                                    children=[]),
                            dcc.Graph(id='curr_pop',
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
@@ -122,7 +122,7 @@ def create_app(configs, stats):
         return fig
 
     @app.callback(
-        Output('custom', 'figure'),
+        Output('custom', 'children'),
         Input('interval', 'n_intervals'), prevent_initial_call=True
     )
     def update_custom(n):
