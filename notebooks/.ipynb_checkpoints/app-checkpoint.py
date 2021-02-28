@@ -12,6 +12,7 @@ from threading import Thread
 from statistics import Statistics
 from single import Single
 import plotly.express as px
+import copy
 
 Population, Running, Configs, Stats = None, None, None, None
 
@@ -105,7 +106,7 @@ def create_app(configs, stats):
                                      fill='tonexty',
                                      line=dict(color=colors[i]),
                                      legendgroup=str(i),
-                                     mode=None))
+                                     mode='lines'))
             fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['mins'][i],
                                      mode=None,
                                      showlegend=False,
@@ -126,13 +127,13 @@ def create_app(configs, stats):
     )
     def update_custom(n):
         if Configs.params['num_objs'] == 1:
-            best = Configs.params['prob_type'].rank_based(Population, 
+            best = Configs.params['prob_type'].rank_based(copy.deepcopy(Population), 
                                                              Configs.params['pop_size'], 
                                                              1)[0]
         else:
-            best = Configs.params['prob_type'].NSGA_II(Population,
+            best = Configs.params['prob_type'].NSGA_II(copy.deepcopy(Population),
                                                           Configs.params['pop_size'],
-                                                          1)[0]
+                                                          2)[0]
         return Configs.params['cust_vis'](Configs, best)
             
 
