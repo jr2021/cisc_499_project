@@ -13,7 +13,7 @@ class Binary:
     def initialize(self):
         return np.array([{'gene': np.random.randint(low=0, high=2, size=self.params['gene_size']),
                           'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
-                          'meta': self.params['gene_meta'].copy()} 
+                          'meta': {}} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -37,8 +37,8 @@ class Binary:
             return ['n-point', 'uniform']
 
         def n_point(self, mother, father):
-            off = {'gene': np.empty(shape=self.params['gene_size']),
-                   'meta': self.params['gene_meta'],
+            off = {'gene': np.empty(shape=self.params['gene_size'], dtype=int),
+                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             points = np.sort(np.random.choice(a=self.params['gene_size'], 
@@ -63,8 +63,7 @@ class Binary:
             return off
             
         def uniform(self, mother, father):
-            off = {'gene': np.empty(shape=self.params['gene_size']),
-                   'meta': self.params['gene_meta'],
+            off = {'gene': np.empty(shape=self.params['gene_size'], dtype=int),
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             for i in range(self.params['gene_size']):
@@ -73,7 +72,7 @@ class Binary:
                 else:
                     off['gene'][i] = father['gene'][i]
                     
-            return off 
+            return off
 
     class Mutation:
         params = None

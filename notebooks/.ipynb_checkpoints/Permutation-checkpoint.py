@@ -12,7 +12,7 @@ class Perm:
         return np.array([{'gene': np.random.permutation(np.arange(start=self.params['min_value'],
                                                                     stop=self.params['max_value'] + 1)),
                           'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
-                          'meta': self.params['gene_meta']} 
+                          'meta': {}} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -39,7 +39,7 @@ class Perm:
             x = np.random.randint(low=0, high=self.params['gene_size'])
             y = np.random.randint(low=x, high=self.params['gene_size'])
             off = {'gene': -np.ones(shape=self.params['gene_size'], dtype=int),
-                   'meta': self.params['gene_meta'],
+                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
 
             off['gene'][x:y] = mother['gene'][x:y]

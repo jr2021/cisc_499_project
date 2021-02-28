@@ -145,10 +145,9 @@ def create_app(configs):
          State('pre_probs', 'value'), prevent_initial_call=True
     )
     def save_pre(n, pre_prob):
-        configs.params['prob_type'] = Single(configs.params)
-        configs.params['num_objs'] = 1
-        
         if pre_prob == 'trav':
+            configs.params['prob_type'] = Single(configs.params)
+            configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
             configs.params['obj_names'] = ['Distance']
             configs.params['enc_type'] = Perm(configs.params)

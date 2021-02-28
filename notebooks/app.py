@@ -11,6 +11,7 @@ import numpy as np
 from threading import Thread
 from statistics import Statistics
 from single import Single
+import plotly.express as px
 
 Population, Running, Configs, Stats = None, None, None, None
 
@@ -79,44 +80,60 @@ def create_app(configs, stats):
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
                                         disabled=True,
-                                        interval=500)] + [dcc.Graph(id='fitness_' + str(i),
-                                                                    figure=go.Figure()) for i in
-                                                          range(1, Configs.params['num_objs'] + 1)])
+                                        interval=500), 
+                           dcc.Graph(id='fitness',
+                                     figure=go.Figure())])
 
     @app.callback(
-        Output('fitness_1', 'figure'),
+        Output('fitness', 'figure'),
         Input('interval', 'n_intervals'), prevent_initial_call=True
     )
-    def update_fitness_1(n):
+    def update_fitness(n):
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['mins'][0],
-                                 mode='lines',
-                                 name='Min.'))
-        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['avgs'][0],
-                                 mode='lines',
-                                 name='Avg.'))
-        fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['maxs'][0],
-                                 mode='lines',
-                                 name='Max.'))
-        fig.update_layout(title='Fitness Objective 1 Convergence',
-                          xaxis_title='Generations',
-                          yaxis_title=Configs.params['obj_names'][0])
+
+        colors = px.colors.qualitative.Plotly
+        for i in range(configs.params['num_objs']):
+            fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['maxs'][i],
+                                     mode=None,
+                                     fill=None,
+                                     line=dict(color=colors[i]),
+                                     showlegend=False,
+                                     legendgroup=str(i),
+                                     name='Max. ' + Configs.params['obj_names'][i]))
+            fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['avgs'][i],
+                                     name=Configs.params['obj_names'][i],
+                                     fill='tonexty',
+                                     line=dict(color=colors[i]),
+                                     legendgroup=str(i),
+                                     mode=None))
+            fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['mins'][i],
+                                     mode=None,
+                                     showlegend=False,
+                                     name='Min. ' + Configs.params['obj_names'][i],
+                                     line=dict(color=colors[i]),
+                                     legendgroup=str(i),
+                                     fill='tonexty'))
+
+        fig.update_layout(title='Fitness Convergence',
+                              xaxis_title='Generations',
+                              yaxis_title='Fitness')
+
         return fig
 
-#     @app.callback(
-#         Output('custom', 'figure'),
-#         Input('interval', 'n_intervals'), prevent_initial_call=True
-#     )
-#     def update_custom(n):
-#         if Configs.params['num_objs'] == 1:
-#             best = Configs.params['prob_type'].rank_based(Population, 
-#                                                              Configs.params['pop_size'], 
-#                                                              1)[0]
-#         else:
-#             best = Configs.params['prob_type'].NSGA_II(Population,
-#                                                           Configs.params['pop_size'],
-#                                                           1)[0]
-#         return Configs.params['cust_vis'](Configs, best)
+    @app.callback(
+        Output('custom', 'figure'),
+        Input('interval', 'n_intervals'), prevent_initial_call=True
+    )
+    def update_custom(n):
+        if Configs.params['num_objs'] == 1:
+            best = Configs.params['prob_type'].rank_based(Population, 
+                                                             Configs.params['pop_size'], 
+                                                             1)[0]
+        else:
+            best = Configs.params['prob_type'].NSGA_II(Population,
+                                                          Configs.params['pop_size'],
+                                                          1)[0]
+        return Configs.params['cust_vis'](Configs, best)
             
 
     @app.callback(
@@ -299,7 +316,7 @@ def create_app(configs, stats):
 def start_GA():
     global Population, Running
 
-    Stats.clear()
+    Stats.setup()
     Population = Configs.params['enc_type'].initialize()
     Population = Configs.params['eval_type'](Configs, Population)
 
@@ -330,7 +347,7 @@ def resume_GA():
         offspring = Configs.params['enc_type'].mate(parents)
         offspring = Configs.params['enc_type'].params['mut_type'](offspring)
         offspring = Configs.params['eval_type'](Configs, offspring)
-        Population = Configs.params['rep_type'](np.concatenate((Population, offspring), axis=0),
+        Population = Configs.params['rep_type'](np.concatenate((Population, offspring)),
                                                 Configs.params['pop_size'] + Configs.params['off_size'], 
                                                 Configs.params['pop_size'])
         Stats.update_dynamic(Population)

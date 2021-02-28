@@ -14,7 +14,7 @@ class Real:
                                                     high=self.params['max_value'],
                                                     size=self.params['gene_size']),
                           'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
-                          'meta': self.params['gene_meta']} 
+                          'meta': {}} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -39,12 +39,12 @@ class Real:
 
         def whole_arithmetic(self, mother, father, alpha):
             return {'gene': (alpha * mother['gene'] + (1 - alpha) * father['gene']) / 2,
-                    'meta': self.params['gene_meta'],
+                    'meta': {},
                     'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
         
         def simple_arithmetic(self, mother, father, alpha):
-            off =  {'gene': np.empty(shape=(self.params['gene_size'])),
-                    'meta': self.params['gene_meta'],
+            off =  {'gene': np.empty(shape=(self.params['gene_size']), dtype=float),
+                    'meta': {},
                     'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             k = np.random.randint(low=0, high=self.params['gene_size'])
             
@@ -80,6 +80,6 @@ class Real:
                         if value > 0:
                             off['gene'][i] = min(off['gene'][i] + value, self.params['max_value'])
                         else:
-                            off['gene'][i] = max(off['gene'][i] + value, self.params['max_value'])
+                            off['gene'][i] = max(off['gene'][i] + value, self.params['min_value'])
             
             return offs

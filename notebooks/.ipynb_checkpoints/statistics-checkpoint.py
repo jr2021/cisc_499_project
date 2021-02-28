@@ -9,11 +9,8 @@ class Statistics:
     
     def __init__(self, params):
         self.params = params
-        self.gen_level = {'fitness': {'mins': [[], [], []],
-                                      'avgs': [[], [], []],
-                                      'maxs': [[], [], []]}}
 
-    def clear(self):
+    def setup(self):
         self.adhoc = {'fitness': {'mins': [[], [], []],
                                   'avgs': [[], [], []],
                                   'maxs': [[], [], []]}}

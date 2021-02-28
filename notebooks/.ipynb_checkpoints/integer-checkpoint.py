@@ -16,7 +16,7 @@ class Integer:
                                                     high=self.params['max_value'], 
                                                     size=self.configs.gene),
                           'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
-                          'meta': self.params['gene_meta']} 
+                          'meta': {}} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -41,7 +41,7 @@ class Integer:
 
         def n_point(self, mother, father):
             off = {'gene': np.empty(size=self.params['gene_size']),
-                   'meta': self.params['gene_meta'],
+                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             points = np.sort(np.random.choice(a=self.params['gene_size'], 
@@ -64,7 +64,7 @@ class Integer:
         
         def uniform(self, mother, father):
             off = {'gene': np.empty(size=self.params['gene_size']),
-                   'meta': self.params['gene_meta'],
+                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             for i in range(self.params['gene_size']):
