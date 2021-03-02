@@ -7,7 +7,7 @@ class Real:
         self.params = params
         self.params['min_value'], self.params['max_value'] = None, None
         self.params['rec_type'], self.params['mut_type'] = None, None
-        self.params['alpha'], self.params['theta'] = None, None
+        self.params['alpha'], self.params['theta'] = 0.75, 5
 
     def initialize(self):
         return np.array([{'gene': np.random.uniform(low=self.params['min_value'],

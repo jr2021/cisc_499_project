@@ -81,7 +81,7 @@ def create_app(configs, stats):
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
                                         disabled=True,
-                                        interval=500), 
+                                        interval=1000), 
                            dcc.Graph(id='fitness',
                                      figure=go.Figure())])
 
@@ -198,9 +198,9 @@ def create_app(configs, stats):
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).order
             elif rec_type == 'partially-mapped':
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).PMX
-            elif rec_type == 'whole_arithmetic':
+            elif rec_type == 'whole-arithmetic':
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).whole_arithmetic
-            elif rec_type == 'simple_arithmetic':
+            elif rec_type == 'simple-arithmetic':
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).simple_arithmetic
             elif rec_type == 'n-point':
                 Configs.params['enc_type'].params['rec_type'] = Configs.params['enc_type'].Cross(Configs.params).n_point

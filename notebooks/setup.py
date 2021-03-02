@@ -28,10 +28,10 @@ def create_app(configs):
                                                   'value': 'trav'},
                                                  {'label': 'Knapsack', 
                                                   'value': 'knap'},
-                                                 {'label': 'Integer Equation solver', 
-                                                  'value': 'int-solv'},
-                                                 {'label': 'Real-Valued Equation solver', 
-                                                  'value': 'real-solv'}]),
+                                                 {'label': 'Eight-Queens', 
+                                                  'value': 'queens'},
+                                                 {'label': 'Sudoku', 
+                                                  'value': 'sudoku'}]),
                            dbc.Button(id='save_pre', 
                                       children='Save predefined problem'),
                            dcc.Markdown('''### Create a custom problem'''),
@@ -166,22 +166,30 @@ def create_app(configs):
             configs.params['enc_type'].params['min_value'] = 0
             configs.params['enc_type'].params['max_value'] = 1
             configs.params['eval_type'] = knapsack
-            configs.params['cust_vis'] = empty
+            configs.params['cust_vis'] = selection
             configs.params['n'] = 8
-        elif pre_prob == 'int-solver':
+        elif pre_prob == 'queens':
+            configs.params['prob_type'] = Single(configs.params)
+            configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
-            configs.params['obj_names'] = ['Error']
-            configs.params['enc_type'] = Integer(configs.params)
-            configs.params['gene_size'] = 16
+            configs.params['obj_names'] = ['Threats']
+            configs.params['enc_type'] = Perm(configs.params)
+            configs.params['gene_size'] = 8
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 100
-        elif pre_prob == 'real-solver':
+            configs.params['enc_type'].params['max_value'] = 7
+            configs.params['eval_type'] = eight_queens
+            configs.params['cust_vis'] = chess_board
+        elif pre_prob == 'sudoku':
+            configs.params['prob_type'] = Single(configs.params)
+            configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
-            configs.params['obj_names'] = ['Error']
-            configs.params['enc_type'] = Integer(configs.params)
-            configs.params['gene_size'] = 16
+            configs.params['obj_names'] = ['Conflicts']
+            configs.params['enc_type'] = Perm(configs.params)
+            configs.params['gene_size'] = 100
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 100
+            configs.params['enc_type'].params['max_value'] = 99
+            configs.params['eval_type'] = sudoku
+            configs.params['cust_vis'] = sudoku_board
         
         return 'Saved'
     
