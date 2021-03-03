@@ -9,6 +9,10 @@ class Statistics:
     
     def __init__(self, params):
         self.params = params
+        self.adhoc = {'fitness': {'mins': [[], [], []],
+                                  'avgs': [[], [], []],
+                                  'maxs': [[], [], []]}}
+        self.posthoc = {'population': {'all': []}}
 
     def setup(self):
         self.adhoc = {'fitness': {'mins': [[], [], []],

@@ -26,38 +26,58 @@ def create_app(configs, stats):
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['prob_type'].get_functions()],
                                         placeholder='Selection'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='sel_type_error'),
                            dcc.Dropdown(id='rec_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['enc_type'].Cross(Configs.params).get_functions()],
                                         placeholder='Recombination'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='rec_type_error'),
+                           dbc.Input(id='n_crossover_value',
+                                    type = 'number'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='n_crossover_value_error'),
                            dcc.Dropdown(id='mut_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['enc_type'].Mutation(Configs.params).get_functions()],
                                         placeholder='Mutation'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='mut_type_error'),
                            dcc.Dropdown(id='rep_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['prob_type'].get_functions()],
                                         placeholder='Replacement'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='rep_type_error'),
                            dbc.Input(id='pop_size',
                                      placeholder='Population Size',
                                      type='number',
                                      min=4, max=128,
                                      step=2),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='pop_size_error'),
                            dbc.Input(id='par_size',
                                      placeholder='Num. Parents',
                                      type='number',
                                      min=2, max=64,
                                      step=2),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='par_size_error'),
                            dbc.Input(id='off_size',
                                      placeholder='Num. Offspring',
                                      type='number',
                                      min=2, max=64,
                                      step=2),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='off_size_error'),
                            dbc.Input(id='mut_rate',
                                      placeholder='Mutation Rate',
                                      type='number',
                                      min=0, max=1,
                                      step=0.01),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='mut_rate_error'),
                            dbc.Button(id='save',
                                       children='Save'),
                            dbc.Button(id='start',
@@ -76,7 +96,7 @@ def create_app(configs, stats):
                                       children='Resume',
                                       disabled=True),
                            html.Div(id='custom',
-                                    children=[]),
+                                    children=[dcc.Graph(figure=go.Figure())]),
                            dcc.Graph(id='curr_pop',
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
@@ -87,7 +107,7 @@ def create_app(configs, stats):
 
     @app.callback(
         Output('fitness', 'figure'),
-        Input('interval', 'n_intervals'), prevent_initial_call=True
+        Input('interval', 'n_intervals')
     )
     def update_fitness(n):
         fig = go.Figure()
@@ -123,23 +143,23 @@ def create_app(configs, stats):
 
     @app.callback(
         Output('custom', 'children'),
-        Input('interval', 'n_intervals'), prevent_initial_call=True
+        Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_custom(n):
         if Configs.params['num_objs'] == 1:
-            best = Configs.params['prob_type'].rank_based(copy.deepcopy(Population), 
+            best = Configs.params['prob_type'].rank_based(Population, 
                                                              Configs.params['pop_size'], 
                                                              1)[0]
         else:
             best = Configs.params['prob_type'].NSGA_II(copy.deepcopy(Population),
                                                           Configs.params['pop_size'],
-                                                          2)[0]
+                                                          1)[0]
         return Configs.params['cust_vis'](Configs, best)
             
 
     @app.callback(
         Output('curr_pop', 'figure'),
-        Input('interval', 'n_intervals'), prevent_initial_call=True
+        Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_curr_pop(n):
         fig = go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])
@@ -310,6 +330,17 @@ def create_app(configs, stats):
         elif ctx.triggered[0]['prop_id'] == 'resume.n_clicks':
             Thread(target=resume_GA, args=()).start()
             return False
+        
+    @app.callback(
+        Output('sel_type_error', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('sel_type', 'value'), prevent_initial_call=True
+    )
+    def no_max_val(n, value):
+        if n:
+            if value is None:
+                return True
+        no_update
 
     return app
 
