@@ -243,9 +243,9 @@ def create_app(configs):
             configs.params['objs'] = [min]
             configs.params['obj_names'] = ['Threats']
             configs.params['enc_type'] = Perm(configs.params)
-            configs.params['gene_size'] = 8
+            configs.params['gene_size'] = 64
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 7
+            configs.params['enc_type'].params['max_value'] = 63
             configs.params['eval_type'] = eight_queens
             configs.params['cust_vis'] = chess_board
         elif pre_prob == 'sudoku':
