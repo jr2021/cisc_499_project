@@ -12,13 +12,9 @@ class Config:
                         'objs': None,
                         'obj_names': None,
                         'enc_type': None,
+                        'enc_name': None,
                         'sel_type': None,
                         'eval_type': None,
                         'rep_type': None,
                         'cust_vis': None,
-                        'mut_rate': None,
-                        'perm_configs': None,
-                        'int_configs': None,
-                        'bin_configs': None,
-                        'sing_configs': None,
-                        'multi_configs': None}
+                        'mut_rate': None}

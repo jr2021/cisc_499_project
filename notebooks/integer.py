@@ -9,14 +9,13 @@ class Integer:
         self.params['min_value'], self.params['max_value'] = None, None
         self.params['rec_type'], self.params['mut_type'] = None, None
         self.params['n'] = None
-        self.params['theta'] = 5
+        self.params['theta'] = None
 
     def initialize(self):
         return np.array([{'gene': np.random.randint(low=self.params['min_value'], 
                                                     high=self.params['max_value'], 
                                                     size=self.params['gene_size']),
-                          'fitness': np.array([0 for _ in range(self.params['num_objs'])]),
-                          'meta': {}} 
+                          'fitness': np.array([0 for _ in range(self.params['num_objs'])])} 
                                                  for _ in range(self.params['pop_size'])])
 
     def mate(self, pars):
@@ -41,7 +40,6 @@ class Integer:
 
         def n_point(self, mother, father):
             off = {'gene': np.empty(shape=self.params['gene_size']),
-                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             points = np.sort(np.random.choice(a=self.params['gene_size'], 
@@ -64,7 +62,6 @@ class Integer:
         
         def uniform(self, mother, father):
             off = {'gene': np.empty(shape=self.params['gene_size']),
-                   'meta': {},
                    'fitness': np.array([0 for _ in range(self.params['num_objs'])])}
             
             for i in range(self.params['gene_size']):

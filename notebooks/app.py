@@ -23,7 +23,8 @@ def create_app(configs, stats):
 
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
-    app.layout = html.Div([dcc.Dropdown(id='sel_type',
+    app.layout = html.Div([dcc.Markdown('''##### Choose selection, recombination, mutation, and replacement techniques'''),
+                           dcc.Dropdown(id='sel_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['prob_type'].get_functions()],
                                         placeholder='Selection'),
@@ -70,17 +71,12 @@ def create_app(configs, stats):
                                         placeholder='Replacement'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='rep_type_error'),
+                           dcc.Markdown('''##### Define population parameters'''),
                            dbc.Input(id='pop_size',
                                      placeholder='Population Size',
                                      type='number',
                                      min=4, max=128,
                                      step=2),
-                           dbc.Input(id='tourn_size',
-                                    type = 'number',
-                                    placeholder='Tournament Size',
-                                    disabled=True),
-                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                        id='tourn_size_error'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='pop_size_error'),
                            dbc.Input(id='par_size',
@@ -97,6 +93,12 @@ def create_app(configs, stats):
                                      step=2),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='off_size_error'),
+                           dbc.Input(id='tourn_size',
+                                    type = 'number',
+                                    placeholder='Tournament Size',
+                                    disabled=True),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                                        id='tourn_size_error'),
                            dbc.Input(id='mut_rate',
                                      placeholder='Mutation Rate',
                                      type='number',
@@ -127,7 +129,7 @@ def create_app(configs, stats):
                                      figure=go.Figure()),
                            dcc.Interval(id='interval',
                                         disabled=True,
-                                        interval=1000), 
+                                        interval=1500), 
                            dcc.Graph(id='fitness',
                                      figure=go.Figure())])
 
@@ -163,7 +165,7 @@ def create_app(configs, stats):
 
         fig.update_layout(title='Fitness Convergence',
                               xaxis_title='Generations',
-                              yaxis_title='Fitness')
+                              yaxis_title='Fitness Value')
 
         return fig
 
@@ -189,8 +191,8 @@ def create_app(configs, stats):
     )
     def update_curr_pop(n):
         fig = go.Figure(data=[go.Heatmap(z=[ind['gene'] for ind in Population])])
-        fig.update_layout(title='Population Genotype Distribution',
-                          xaxis_title='Genotype', yaxis_title='Individual')
+        fig.update_layout(title='Population ' + Configs.params['enc_name'] + ' Distribution',
+                          xaxis_title=Configs.params['enc_name'], yaxis_title='Candidate Solution')
         return fig
 
     @app.callback(

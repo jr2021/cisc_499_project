@@ -22,27 +22,28 @@ def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
-    app.layout = html.Div([dcc.Markdown('''### Choose a predefined problem'''), 
+    app.layout = html.Div([dcc.Markdown('''##### Select a default configuration'''), 
                            dcc.Dropdown(id='pre_probs', 
-                                        options=[{'label': 'Traveling salesperson', 
+                                        options=[{'label': '100-Stop Traveling salesperson', 
                                                   'value': 'trav'},
-                                                 {'label': 'Knapsack', 
+                                                 {'label': '64-Item Knapsack', 
                                                   'value': 'knap'},
-                                                 {'label': 'Eight-Queens', 
+                                                 {'label': '64-Queens', 
                                                   'value': 'queens'},
-                                                 {'label': 'Sudoku', 
-                                                  'value': 'sudoku'}]),
+                                                 {'label': '10x10 Sudoku', 
+                                                  'value': 'sudoku'}],
+                                       placeholder='Problem Instances'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='pre_prob_error'),
                            dbc.Button(id='save_pre', 
-                                      children='Save predefined problem'),
-                           dcc.Markdown('''### Create a custom problem'''),
+                                      children='Save default'),
+                           dcc.Markdown('''##### Define a custom configuration'''),
                            dcc.Dropdown(id='prob_type',
                                         options=[{'label': 'single-objective', 
                                                   'value': 'sing-obj'},
                                                  {'label': 'multi-objective', 
                                                   'value': 'multi-obj'}],
-                                        placeholder='Objectiveness'),
+                                        placeholder='Problem Type'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='prob_type_error'),
                            dbc.Input(id='num_objs',
@@ -121,8 +122,31 @@ def create_app(configs):
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='max_val_error'),
                            dbc.Button(id='save_cust', 
-                                      children='Save custom problem')])   
+                                      children='Save custom')])   
     
+    
+    @app.callback(
+        Output('num_objs', 'min'),
+        Output('num_objs', 'max'),
+        Input('prob_type', 'value'), prevent_initial_call = True
+    )
+    def num_objs_constraint(value):
+        if value == 'multi-obj':
+            return 1, 3
+        else:
+            return 1, 1
+        
+    @app.callback(
+        Output('num_objs', 'value'),
+        Output('num_objs', 'disabled'),
+        Input('prob_type', 'value'), prevent_initial_call = True
+    )
+    def num_objs_constraint(value):
+        if value == 'sing-obj':
+            return 1, True
+        else:
+            return None, False
+            
     
     @app.callback(
          Output('obj_1_name', 'disabled'),
@@ -139,10 +163,9 @@ def create_app(configs):
                 return False, True, True, False, True, True
             elif num_objs == 2:
                 return False, False, True, False, False, True
-            else:
+            elif num_objs == 3:
                 return False, False, False, False, False, False
-        else:
-            return True, True, True, True, True, True
+        return True, True, True, True, True, True
         
     @app.callback(
          Output('gene_size', 'disabled'),
@@ -219,6 +242,7 @@ def create_app(configs):
             configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
             configs.params['obj_names'] = ['Distance']
+            configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
             configs.params['gene_size'] = 64
             configs.params['enc_type'].params['min_value'] = 0
@@ -230,6 +254,7 @@ def create_app(configs):
             configs.params['num_objs'] = 2
             configs.params['objs'] = [max, min]
             configs.params['obj_names'] = ['Value', 'Weight']
+            configs.params['enc_name'] = 'Binary String'
             configs.params['enc_type'] = Binary(configs.params)
             configs.params['gene_size'] = 64
             configs.params['enc_type'].params['min_value'] = 0
@@ -242,6 +267,7 @@ def create_app(configs):
             configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
             configs.params['obj_names'] = ['Threats']
+            configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
             configs.params['gene_size'] = 64
             configs.params['enc_type'].params['min_value'] = 0
@@ -253,6 +279,7 @@ def create_app(configs):
             configs.params['num_objs'] = 1
             configs.params['objs'] = [min]
             configs.params['obj_names'] = ['Conflicts']
+            configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
             configs.params['gene_size'] = 100
             configs.params['enc_type'].params['min_value'] = 0
@@ -298,12 +325,16 @@ def create_app(configs):
             configs.params['obj_names'].append(names[i])
         
         if enc_type == 'perm':
+            configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
         elif enc_type == 'binary':
+            configs.params['enc_name'] = 'Binary String'
             configs.params['enc_type'] = Binary(configs.params)
         elif enc_type == 'int':
+            configs.params['enc_name'] = 'Integer String'
             configs.params['enc_type'] = Integer(configs.params)
         elif enc_type == 'real':
+            configs.params['enc_name'] = 'Real-Valued String'
             configs.params['enc_type'] = Real(configs.params)
         configs.params['gene_size'] = gene_size
         configs.params['enc_type'].params['min_value'] = min_value

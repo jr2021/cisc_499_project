@@ -6,8 +6,7 @@ class Single:
 
     def __init__(self, params):
         self.params = params
-        self.params['gene_meta'] = {}
-        self.params['tourn_size'] = 32  # must be less than par_size and pop_size
+        self.params['tourn_size'] = None  # must be less than par_size and pop_size
 
         
     def get_functions(self):
