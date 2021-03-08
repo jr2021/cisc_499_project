@@ -36,20 +36,21 @@ def create_app(configs, stats):
                                         placeholder='Recombination'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='rec_type_error'),
-                           dbc.Input(id='n_crossover_value',
-                                    type = 'number',
-                                    placeholder='Number of Crossover Points',
-                                    disabled=True,
-                                    min=0,
-                                    max=Configs.params['gene_size']),
+                           dbc.Collapse(dbc.Input(id='n_crossover_value',
+                                                  type = 'number',
+                                                  placeholder='Number of Crossover Points',
+                                                  disabled=True,
+                                                  min=0,
+                                                  max=Configs.params['gene_size']),
+                                        id='n_crossover_value_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='n_crossover_value_error'),
-                           dbc.Input(id='alpha',
-                                    type = 'number',
-                                    placeholder='Blending Ratio',
-                                    disabled=True,
-                                    min=0,
-                                    max=1),
+                           dbc.Collapse(dbc.Input(id='alpha',
+                                                  type = 'number',
+                                                  placeholder='Blending Ratio',
+                                                  min=0,
+                                                  max=1),
+                                        id='alpha_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='alpha_error'),
                            dcc.Dropdown(id='mut_type',
@@ -58,11 +59,11 @@ def create_app(configs, stats):
                                         placeholder='Mutation'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='mut_type_error'),
-                           dbc.Input(id='theta',
-                                    type = 'number',
-                                    placeholder='Standard Deviation',
-                                    disabled=True,
-                                    min=0),
+                           dbc.Collapse(dbc.Input(id='theta',
+                                                  type = 'number',
+                                                  placeholder='Standard Deviation',
+                                                  min=0),
+                                        id='theta_collapse'),
                             dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='theta_error'),
                            dcc.Dropdown(id='rep_type',
@@ -93,10 +94,10 @@ def create_app(configs, stats):
                                      step=2),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='off_size_error'),
-                           dbc.Input(id='tourn_size',
-                                    type = 'number',
-                                    placeholder='Tournament Size',
-                                    disabled=True),
+                           dbc.Collapse(dbc.Input(id='tourn_size',
+                                                  type = 'number',
+                                                  placeholder='Tournament Size'),
+                                       id='tourn_size_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='tourn_size_error'),
                            dbc.Input(id='mut_rate',
@@ -174,15 +175,18 @@ def create_app(configs, stats):
         Input('interval', 'n_intervals'), prevent_initial_call = True
     )
     def update_custom(n):
-        if Configs.params['num_objs'] == 1:
-            best = Configs.params['prob_type'].rank_based(Population, 
-                                                             Configs.params['pop_size'], 
-                                                             1)[0]
+        if Configs.params['cust_vis'] == None:
+            return dcc.Graph(figure=go.Figure())
         else:
-            best = Configs.params['prob_type'].NSGA_II(copy.deepcopy(Population),
-                                                          Configs.params['pop_size'],
-                                                          1)[0]
-        return Configs.params['cust_vis'](Configs, best)
+            if Configs.params['num_objs'] == 1:
+                best = Configs.params['prob_type'].rank_based(Population, 
+                                                                 Configs.params['pop_size'], 
+                                                                 1)[0]
+            else:
+                best = Configs.params['prob_type'].NSGA_II(copy.deepcopy(Population),
+                                                              Configs.params['pop_size'],
+                                                              1)[0]
+            return Configs.params['cust_vis'](Configs, best)
             
 
     @app.callback(
@@ -230,12 +234,12 @@ def create_app(configs, stats):
         State('tourn_size', 'value'),
         State('alpha', 'value'),
         State('theta', 'value'),
-        State('n_crossover_value', 'disabled'),
-        State('tourn_size', 'disabled'),
-        State('alpha', 'disabled'),
-        State('theta', 'disabled'), prevent_initial_call=True
+        State('n_crossover_value_collapse', 'is_open'),
+        State('tourn_size_collapse', 'is_open'),
+        State('alpha_collapse', 'is_open'),
+        State('theta_collapse', 'is_open'), prevent_initial_call=True
     )
-    def enable_start(start_clicks, save_clicks, resume_dis, sel_type, rec_type, mut_type, rep_type, pop_size, par_size, off_size, mut_rate, n_crossover, tourn_size, alpha, theta, n_disabled, tourn_disabled, alpha_disabled, theta_disabled):
+    def enable_start(start_clicks, save_clicks, resume_dis, sel_type, rec_type, mut_type, rep_type, pop_size, par_size, off_size, mut_rate, n_crossover, tourn_size, alpha, theta, n_open, tourn_open, alpha_open, theta_open):
     
         ctx = dash.callback_context
         if ctx.triggered[0]['prop_id'] == 'start.n_clicks':
@@ -243,13 +247,13 @@ def create_app(configs, stats):
         elif ctx.triggered[0]['prop_id'] == 'save.n_clicks':
             if None in (sel_type, rec_type, mut_type, rep_type, pop_size, par_size, off_size, mut_rate):
                 raise PreventUpdate
-            elif alpha is None and alpha_disabled == False:
+            elif alpha is None and alpha_open == True:
                 raise PreventUpdate
-            elif theta is None and theta_disabled == False:
+            elif theta is None and theta_open == True:
                 raise PreventUpdate
-            elif tourn_size is None and tourn_disabled == False:
+            elif tourn_size is None and tourn_open == True:
                 raise PreventUpdate
-            elif n_crossover is None and n_disabled == False:
+            elif n_crossover is None and n_open == True:
                 raise PreventUpdate
             
             if sel_type == 'rank-based':
@@ -383,45 +387,45 @@ def create_app(configs, stats):
             return False
     
     @app.callback(
-        Output('n_crossover_value', 'disabled'),
+        Output('n_crossover_value_collapse', 'is_open'),
         Input('rec_type', 'value')
     )
     def enable_n_point(value):
         if value == 'n-point':
-            return False
-        else:
             return True
+        else:
+            return False
         
     @app.callback(
-        Output('tourn_size', 'disabled'),
+        Output('tourn_size_collapse', 'is_open'),
         Input('sel_type', 'value'),
         Input('rep_type', 'value')
     )
     def enable_tourn_size(sel_type, rep_type):
         if sel_type == 'tournament' or rep_type == 'tournament':
-            return False
-        else:
             return True
+        else:
+            return False
         
     @app.callback(
-        Output('alpha', 'disabled'),
+        Output('alpha_collapse', 'is_open'),
         Input('rec_type', 'value')
     )
     def enable_alpha(value):
         if value == 'whole-arithmetic' or value == 'simple-arithmetic':
-            return False
-        else:
             return True
+        else:
+            return False
         
     @app.callback(
-        Output('theta', 'disabled'),
+        Output('theta_collapse', 'is_open'),
         Input('mut_type', 'value')
     )
     def enable_theta(value):
         if value == 'non-uniform' or value == 'creep':
-            return False
-        else:
             return True
+        else:
+            return False
     
     @app.callback(
         Output('sel_type_error', 'is_open'),
@@ -449,10 +453,10 @@ def create_app(configs, stats):
         Output('n_crossover_value_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('n_crossover_value', 'value'),
-        State('n_crossover_value', 'disabled'), prevent_initial_call=True
+        State('n_crossover_value_collapse', 'is_open'), prevent_initial_call=True
     )
-    def no_n(n, value, disabled):
-        if n is not None and disabled == False:
+    def no_n(n, value, is_open):
+        if n is not None and is_open == True:
             if value is None:
                 return True
         return False
@@ -527,10 +531,10 @@ def create_app(configs, stats):
         Output('tourn_size_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('tourn_size', 'value'),
-        State('tourn_size', 'disabled'), prevent_initial_call=True
+        State('tourn_size_collapse', 'is_open'), prevent_initial_call=True
     )
-    def no_tourn_size(n, value, disabled):
-        if n is not None and disabled == False:
+    def no_tourn_size(n, value, is_open):
+        if n is not None and is_open == True:
             if value is None:
                 return True
         return False
@@ -539,10 +543,10 @@ def create_app(configs, stats):
         Output('alpha_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('alpha', 'value'),
-        State('alpha', 'disabled'), prevent_initial_call=True
+        State('alpha_collapse', 'is_open'), prevent_initial_call=True
     )
-    def no_alpha(n, value, disabled):
-        if n is not None and disabled == False:
+    def no_alpha(n, value, is_open):
+        if n is not None and is_open == True:
             if value is None:
                 return True
         return False
@@ -551,10 +555,10 @@ def create_app(configs, stats):
         Output('theta_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('theta', 'value'),
-        State('theta', 'disabled'), prevent_initial_call=True
+        State('theta_collapse', 'is_open'), prevent_initial_call=True
     )
-    def no_theta(n, value, disabled):
-        if n is not None and disabled == False:
+    def no_theta(n, value, is_open):
+        if n is not None and is_open == True:
             if value is None:
                 return True
         return False

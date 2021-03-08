@@ -17,7 +17,8 @@ from real import Real
 import pickle
 from evaluate import *
 from visualize import *
-global_min, global_max = 0, 100
+
+
 def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -51,44 +52,50 @@ def create_app(configs):
                                      type='number', 
                                      min=1, max=3),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='num_objs_error'),
-                           dbc.Input(id='obj_1_name',
-                                     placeholder='Objective 1 name',
-                                     type='text'),
+                                        id='num_objs_error'),
+                           dbc.Collapse(dbc.Input(id='obj_1_name',
+                                                  placeholder='Objective 1 name',
+                                                  type='text'),
+                                       id='obj_1_name_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='obj_1_name_error'),
-                           dcc.Dropdown(id='obj_1_goal',
-                                        options=[{'label': 'minimize', 
-                                                  'value': 'min'},
-                                                 {'label': 'maximize', 
-                                                  'value': 'max'}],
-                                        placeholder='Objective 1 goal'),
+                                        id='obj_1_name_error'),
+                           dbc.Collapse(dcc.Dropdown(id='obj_1_goal',
+                                                     options=[{'label': 'minimize', 
+                                                               'value': 'min'},
+                                                              {'label': 'maximize', 
+                                                               'value': 'max'}],
+                                                     placeholder='Objective 1 goal'),
+                                         id='obj_1_goal_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='obj_1_goal_error'),
-                           dbc.Input(id='obj_2_name',
-                                     placeholder='Objective 2 name',
-                                     type='text'),
+                           dbc.Collapse(dbc.Input(id='obj_2_name',
+                                                  placeholder='Objective 2 name',
+                                                  type='text'),
+                                       id='obj_2_name_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='obj_2_name_error'),
-                           dcc.Dropdown(id='obj_2_goal',
-                                        options=[{'label': 'minimize', 
-                                                  'value': 'min'},
-                                                 {'label': 'maximize', 
-                                                  'value': 'max'}],
-                                        placeholder='Objective 2 goal'),
+                                        id='obj_2_name_error'),
+                           dbc.Collapse(dcc.Dropdown(id='obj_2_goal',
+                                                     options=[{'label': 'minimize', 
+                                                               'value': 'min'},
+                                                              {'label': 'maximize', 
+                                                               'value': 'max'}],
+                                                     placeholder='Objective 2 goal'),
+                                         id='obj_2_goal_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='obj_2_goal_error'),
-                           dbc.Input(id='obj_3_name',
-                                     placeholder='Objective 3 name',
-                                     type='text'),
+                           dbc.Collapse(dbc.Input(id='obj_3_name',
+                                                  placeholder='Objective 3 name',
+                                                  type='text'),
+                                       id='obj_3_name_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='obj_3_name_error'),
-                           dcc.Dropdown(id='obj_3_goal',
-                                        options=[{'label': 'minimize', 
-                                                  'value': 'min'},
-                                                 {'label': 'maximize', 
-                                                  'value': 'max'}],
-                                        placeholder='Objective 3 goal'),
+                                        id='obj_3_name_error'),
+                           dbc.Collapse(dcc.Dropdown(id='obj_3_goal',
+                                                     options=[{'label': 'minimize', 
+                                                               'value': 'min'},
+                                                              {'label': 'maximize', 
+                                                               'value': 'max'}],
+                                                     placeholder='Objective 3 goal'),
+                                         id='obj_3_goal_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='obj_3_goal_error'),
                            dcc.Dropdown(id='enc_type',
@@ -149,23 +156,23 @@ def create_app(configs):
             
     
     @app.callback(
-         Output('obj_1_name', 'disabled'),
-         Output('obj_2_name', 'disabled'),
-         Output('obj_3_name', 'disabled'),
-         Output('obj_1_goal', 'disabled'),
-         Output('obj_2_goal', 'disabled'),
-         Output('obj_3_goal', 'disabled'),
+         Output('obj_1_name_collapse', 'is_open'),
+         Output('obj_2_name_collapse', 'is_open'),
+         Output('obj_3_name_collapse', 'is_open'),
+         Output('obj_1_goal_collapse', 'is_open'),
+         Output('obj_2_goal_collapse', 'is_open'),
+         Output('obj_3_goal_collapse', 'is_open'),
          Input('num_objs', 'value')
     )
     def objs_enable(num_objs):
         if num_objs:
             if num_objs == 1:
-                return False, True, True, False, True, True
+                return True, False, False, True, False, False
             elif num_objs == 2:
-                return False, False, True, False, False, True
+                return True, True, False, True, True, False
             elif num_objs == 3:
-                return False, False, False, False, False, False
-        return True, True, True, True, True, True
+                return True, True, True, True, True, True
+        return False, False, False, False, False, False
         
     @app.callback(
          Output('gene_size', 'disabled'),
@@ -281,9 +288,9 @@ def create_app(configs):
             configs.params['obj_names'] = ['Conflicts']
             configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
-            configs.params['gene_size'] = 100
+            configs.params['gene_size'] = 32
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 99
+            configs.params['enc_type'].params['max_value'] = 31
             configs.params['eval_type'] = sudoku
             configs.params['cust_vis'] = sudoku_board
         
