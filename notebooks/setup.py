@@ -17,15 +17,14 @@ from real import Real
 import pickle
 from evaluate import *
 from visualize import *
-
-
+global_min, global_max = 0, 100
 def create_app(configs):
     
     app = JupyterDash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     server = app.server
     app.layout = html.Div([dcc.Markdown('''##### Select a default configuration'''), 
                            dcc.Dropdown(id='pre_probs', 
-                                        options=[{'label': '100-Stop Traveling salesperson', 
+                                        options=[{'label': '32-Stop Traveling salesperson', 
                                                   'value': 'trav'},
                                                  {'label': '64-Item Knapsack', 
                                                   'value': 'knap'},
@@ -47,57 +46,56 @@ def create_app(configs):
                                         placeholder='Problem Type'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='prob_type_error'),
-                           dbc.Input(id='num_objs',
-                                     placeholder='Number of objectives',
-                                     type='number', 
-                                     min=1, max=3),
+                           dcc.Dropdown(id='num_objs',
+                                        options=[{'label': '1', 
+                                                  'value': 1},
+                                                 {'label': '2', 
+                                                  'value': 2},
+                                                 {'label': '3', 
+                                                  'value': 3}],
+                                        disabled=True,
+                                        placeholder='Number of objectives'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                        id='num_objs_error'),
-                           dbc.Collapse(dbc.Input(id='obj_1_name',
-                                                  placeholder='Objective 1 name',
-                                                  type='text'),
-                                       id='obj_1_name_collapse'),
+                                       id='num_objs_error'),
+                           dbc.Input(id='obj_1_name',
+                                     placeholder='Objective 1 name',
+                                     type='text'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                        id='obj_1_name_error'),
-                           dbc.Collapse(dcc.Dropdown(id='obj_1_goal',
-                                                     options=[{'label': 'minimize', 
-                                                               'value': 'min'},
-                                                              {'label': 'maximize', 
-                                                               'value': 'max'}],
-                                                     placeholder='Objective 1 goal'),
-                                         id='obj_1_goal_collapse'),
+                                       id='obj_1_name_error'),
+                           dcc.Dropdown(id='obj_1_goal',
+                                        options=[{'label': 'minimize', 
+                                                  'value': 'min'},
+                                                 {'label': 'maximize', 
+                                                  'value': 'max'}],
+                                        placeholder='Objective 1 goal'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='obj_1_goal_error'),
-                           dbc.Collapse(dbc.Input(id='obj_2_name',
-                                                  placeholder='Objective 2 name',
-                                                  type='text'),
-                                       id='obj_2_name_collapse'),
+                           dbc.Collapse(children=(dbc.Input(id='obj_2_name',
+                                     placeholder='Objective 2 name',
+                                     type='text'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                        id='obj_2_name_error'),
-                           dbc.Collapse(dcc.Dropdown(id='obj_2_goal',
-                                                     options=[{'label': 'minimize', 
-                                                               'value': 'min'},
-                                                              {'label': 'maximize', 
-                                                               'value': 'max'}],
-                                                     placeholder='Objective 2 goal'),
-                                         id='obj_2_goal_collapse'),
+                                       id='obj_2_name_error'),
+                           dcc.Dropdown(id='obj_2_goal',
+                                        options=[{'label': 'minimize', 
+                                                  'value': 'min'},
+                                                 {'label': 'maximize', 
+                                                  'value': 'max'}],
+                                        placeholder='Objective 2 goal'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='obj_2_goal_error'),
-                           dbc.Collapse(dbc.Input(id='obj_3_name',
-                                                  placeholder='Objective 3 name',
-                                                  type='text'),
-                                       id='obj_3_name_collapse'),
+                                       id='obj_2_goal_error')), id='obj_2_collapse', is_open = False),
+                           dbc.Collapse(children=(dbc.Input(id='obj_3_name',
+                                     placeholder='Objective 3 name',
+                                     type='text'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                        id='obj_3_name_error'),
-                           dbc.Collapse(dcc.Dropdown(id='obj_3_goal',
-                                                     options=[{'label': 'minimize', 
-                                                               'value': 'min'},
-                                                              {'label': 'maximize', 
-                                                               'value': 'max'}],
-                                                     placeholder='Objective 3 goal'),
-                                         id='obj_3_goal_collapse'),
+                                       id='obj_3_name_error'),
+                           dcc.Dropdown(id='obj_3_goal',
+                                        options=[{'label': 'minimize', 
+                                                  'value': 'min'},
+                                                 {'label': 'maximize', 
+                                                  'value': 'max'}],
+                                        placeholder='Objective 3 goal'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
-                                       id='obj_3_goal_error'),
+                                       id='obj_3_goal_error')), id='obj_3_collapse', is_open = False),
                            dcc.Dropdown(id='enc_type',
                                         options=[{'label': 'Permutation', 
                                                   'value': 'perm'},
@@ -113,66 +111,75 @@ def create_app(configs):
                            dbc.Input(id='gene_size',
                                      placeholder='Gene Size',
                                      type='number', 
-                                     min=0, max=100),
+                                     min=0),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='gene_size_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Gene size must be non-negative')),
+                                       id='gene_size_wrong'),
                            dbc.Input(id='min_val',
                                      placeholder='Minimum Value',
-                                     type='number', 
-                                     min=0, max=100),
+                                     type='number'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('The minimum value must be less than the maximum value')),
+                                       id='min_val_wrong'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='min_val_error'),
                            dbc.Input(id='max_val',
                                      placeholder='Maximum Value',
-                                     type='number', 
-                                     min=0, max=100),
+                                     type='number'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                        id='max_val_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('The maximum value must be greater than the minimum value')),
+                                       id='max_val_wrong'),
                            dbc.Button(id='save_cust', 
                                       children='Save custom')])   
     
-    
-    @app.callback(
-        Output('num_objs', 'min'),
-        Output('num_objs', 'max'),
-        Input('prob_type', 'value'), prevent_initial_call = True
-    )
-    def num_objs_constraint(value):
-        if value == 'multi-obj':
-            return 1, 3
-        else:
-            return 1, 1
         
     @app.callback(
         Output('num_objs', 'value'),
         Output('num_objs', 'disabled'),
+        Output('num_objs', 'options'),
         Input('prob_type', 'value'), prevent_initial_call = True
     )
     def num_objs_constraint(value):
         if value == 'sing-obj':
-            return 1, True
+            return 1, True, [{'label': '1', 'value': 1}]
         else:
-            return None, False
-            
+            return None, False, [{'label': '2', 'value': 2},
+                                 {'label': '3', 'value': 3}]
+        
+    @app.callback(
+        Output('obj_2_collapse', 'is_open'),
+        Output('obj_3_collapse', 'is_open'),
+        Input('num_objs', 'value'), prevent_initial_call = True
+    )
+    def num_objs_constraint(value):
+        if value == None or value > 3:
+            raise PreventUpdate
+        elif value == 1:
+            return False, False
+        elif value == 2:
+            return True, False
+        elif value == 3:
+            return True, True
     
     @app.callback(
-         Output('obj_1_name_collapse', 'is_open'),
-         Output('obj_2_name_collapse', 'is_open'),
-         Output('obj_3_name_collapse', 'is_open'),
-         Output('obj_1_goal_collapse', 'is_open'),
-         Output('obj_2_goal_collapse', 'is_open'),
-         Output('obj_3_goal_collapse', 'is_open'),
+         Output('obj_1_name', 'disabled'),
+         Output('obj_2_name', 'disabled'),
+         Output('obj_3_name', 'disabled'),
+         Output('obj_1_goal', 'disabled'),
+         Output('obj_2_goal', 'disabled'),
+         Output('obj_3_goal', 'disabled'),
          Input('num_objs', 'value')
     )
     def objs_enable(num_objs):
         if num_objs:
             if num_objs == 1:
-                return True, False, False, True, False, False
+                return False, True, True, False, True, True
             elif num_objs == 2:
-                return True, True, False, True, True, False
+                return False, False, True, False, False, True
             elif num_objs == 3:
-                return True, True, True, True, True, True
-        return False, False, False, False, False, False
+                return False, False, False, False, False, False
+        return True, True, True, True, True, True
         
     @app.callback(
          Output('gene_size', 'disabled'),
@@ -195,7 +202,7 @@ def create_app(configs):
         if enc_type == 'binary':
             return True, True, 0, 1
         else:
-            return False, False, 0, 0
+            return False, False, None, None
         
     @app.callback(
         Output('min_val', 'max'),
@@ -222,7 +229,7 @@ def create_app(configs):
          Output('gene_size', 'value'),
          Input('min_val', 'value'),
          Input('max_val', 'value'),
-         State('enc_type', 'value'),prevent_initial_call=True
+         State('enc_type', 'value'), prevent_initial_call=True
     )
     def gene_size_selection(min_val, max_val, enc_type):
         if enc_type != 'perm':
@@ -233,7 +240,9 @@ def create_app(configs):
             if min_val >= max_val:
                 return 0
             else:
-                return max_val - min_val
+                return (max_val - min_val) + 1 
+            
+    
     
     @app.callback(
          Output('save_pre', 'children'),
@@ -251,9 +260,9 @@ def create_app(configs):
             configs.params['obj_names'] = ['Distance']
             configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
-            configs.params['gene_size'] = 64
+            configs.params['gene_size'] = 16
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 63
+            configs.params['enc_type'].params['max_value'] = 15
             configs.params['eval_type'] = TSP
             configs.params['cust_vis'] = network
         elif pre_prob == 'knap':
@@ -288,9 +297,9 @@ def create_app(configs):
             configs.params['obj_names'] = ['Conflicts']
             configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
-            configs.params['gene_size'] = 32
+            configs.params['gene_size'] = 100
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 31
+            configs.params['enc_type'].params['max_value'] = 99
             configs.params['eval_type'] = sudoku
             configs.params['cust_vis'] = sudoku_board
         
@@ -313,7 +322,20 @@ def create_app(configs):
          State('max_val', 'value'), prevent_initial_call=True
     )
     def save(n, prob_type, num_objs, obj_1_name, obj_2_name, obj_3_name, obj_1_goal, obj_2_goal, obj_3_goal, enc_type, gene_size, min_value, max_value):
-        if None in (n, prob_type, num_objs, obj_1_name, obj_2_name, obj_3_name, obj_1_goal, obj_2_goal, obj_3_goal, enc_type, gene_size, min_value, max_value):
+        
+        if None in (n, prob_type, num_objs, min_value, max_value):
+            raise PreventUpdate
+        elif num_objs == 1 and None in (obj_1_name, obj_1_goal):
+            raise PreventUpdate
+        elif num_objs == 2 and None in (obj_1_name, obj_1_goal, obj_2_name, obj_2_goal):
+            raise PreventUpdate
+        elif num_objs == 3 and None in (obj_1_name, obj_1_goal, obj_2_name, obj_2_goal, obj_3_name, obj_3_goal):
+            raise PreventUpdate
+        elif gene_size is not None and gene_size < 0:
+            raise PreventUpdate
+        elif min_value is not None and min_value >= max_value:
+            raise PreventUpdate
+        elif max_value is not None and max_value <= min_value:
             raise PreventUpdate
             
         if prob_type == 'sing-obj':
@@ -466,6 +488,17 @@ def create_app(configs):
         no_update
         
     @app.callback(
+        Output('gene_size_wrong', 'is_open'),
+        Input('save_cust', 'n_clicks'),
+        State('gene_size', 'value'), prevent_initial_call=True
+    )
+    def wrong_gene_size(n, value):
+        if n:
+            if value < 0:
+                return True
+        no_update
+        
+    @app.callback(
         Output('min_val_error', 'is_open'),
         Input('save_cust', 'n_clicks'),
         State('min_val', 'value'), prevent_initial_call=True
@@ -473,6 +506,18 @@ def create_app(configs):
     def no_min_val(n, value):
         if n:
             if value is None:
+                return True
+        no_update
+        
+    @app.callback(
+        Output('min_val_wrong', 'is_open'),
+        Input('save_cust', 'n_clicks'),
+        State('min_val', 'value'),
+        State('max_val', 'value'), prevent_initial_call=True
+    )
+    def wrong_min_val(n, min_val, max_val):
+        if n:
+            if min_val >= max_val:
                 return True
         no_update
 
@@ -484,6 +529,18 @@ def create_app(configs):
     def no_max_val(n, value):
         if n:
             if value is None:
+                return True
+        no_update
+        
+    @app.callback(
+        Output('max_val_wrong', 'is_open'),
+        Input('save_cust', 'n_clicks'),
+        State('min_val', 'value'),
+        State('max_val', 'value'), prevent_initial_call=True
+    )
+    def wrong_max_val(n, min_val, max_val):
+        if n:
+            if max_val <= min_val:
                 return True
         no_update
     

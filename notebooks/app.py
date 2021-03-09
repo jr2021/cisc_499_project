@@ -39,12 +39,13 @@ def create_app(configs, stats):
                            dbc.Collapse(dbc.Input(id='n_crossover_value',
                                                   type = 'number',
                                                   placeholder='Number of Crossover Points',
-                                                  disabled=True,
                                                   min=0,
                                                   max=Configs.params['gene_size']),
                                         id='n_crossover_value_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='n_crossover_value_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('n must be in the range from 0 to gene size')),
+                                        id='n_crossover_value_wrong'),
                            dbc.Collapse(dbc.Input(id='alpha',
                                                   type = 'number',
                                                   placeholder='Blending Ratio',
@@ -53,6 +54,8 @@ def create_app(configs, stats):
                                         id='alpha_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='alpha_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('alpha must be be in the range from 0 to 1')),
+                                        id='alpha_wrong'),
                            dcc.Dropdown(id='mut_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['enc_type'].Mutation(Configs.params).get_functions()],
@@ -64,8 +67,10 @@ def create_app(configs, stats):
                                                   placeholder='Standard Deviation',
                                                   min=0),
                                         id='theta_collapse'),
-                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='theta_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Theta must be non-negative')),
+                                        id='theta_wrong'),
                            dcc.Dropdown(id='rep_type',
                                         options=[{'label': opt, 'value': opt}
                                                  for opt in Configs.params['prob_type'].get_functions()],
@@ -80,6 +85,8 @@ def create_app(configs, stats):
                                      step=2),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='pop_size_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Population size must be in the range from 1 to 128')),
+                                        id='pop_size_wrong'),
                            dbc.Input(id='par_size',
                                      placeholder='Num. Parents',
                                      type='number',
@@ -87,6 +94,8 @@ def create_app(configs, stats):
                                      step=2),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='par_size_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Parent size must be non-negative')),
+                                                id='wrong_par_size'),
                            dbc.Input(id='off_size',
                                      placeholder='Num. Offspring',
                                      type='number',
@@ -94,12 +103,29 @@ def create_app(configs, stats):
                                      step=2),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='off_size_error'),
-                           dbc.Collapse(dbc.Input(id='tourn_size',
-                                                  type = 'number',
-                                                  placeholder='Tournament Size'),
-                                       id='tourn_size_collapse'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Children size must be non-negative')),
+                                                id='wrong_off_size'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Parent and children size must be greater than or equal to population size')),
+                                        id='par_chi_error'),
+                           dbc.Collapse(dcc.Dropdown(id='tourn_size',
+                                        options=[{'label': '2', 
+                                                  'value': 2},
+                                                {'label': '4', 
+                                                  'value': 4},
+                                                {'label': '8', 
+                                                  'value': 8},
+                                                {'label': '16', 
+                                                  'value': 16},
+                                                {'label': '32', 
+                                                  'value': 32},
+                                                {'label': '64', 
+                                                  'value': 64}],
+                                        placeholder='Tournament Size'),
+                                        id='tourn_size_collapse'),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='tourn_size_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Tournament size must be in the range from 0 to the minimum of parent size and population size')),
+                                        id='tourn_parent_error'),
                            dbc.Input(id='mut_rate',
                                      placeholder='Mutation Rate',
                                      type='number',
@@ -107,6 +133,8 @@ def create_app(configs, stats):
                                      step=0.01),
                            dbc.Collapse(dbc.Card(dbc.CardBody('This is a required field')),
                                         id='mut_rate_error'),
+                           dbc.Collapse(dbc.Card(dbc.CardBody('Mutation rate must be in the range from 0 to 1')),
+                                        id='mut_rate_wrong'),
                            dbc.Button(id='save',
                                       children='Save'),
                            dbc.Button(id='start',
@@ -254,6 +282,24 @@ def create_app(configs, stats):
             elif tourn_size is None and tourn_open == True:
                 raise PreventUpdate
             elif n_crossover is None and n_open == True:
+                raise PreventUpdate
+            elif mut_rate < 0 or mut_rate > 1:
+                raise PreventUpdate
+            elif pop_size < 1 or pop_size > 128:
+                raise PreventUpdate
+            elif tourn_open == True and (tourn_size < 0 or (tourn_size > par_size) or (tourn_size > pop_size)):
+                raise PreventUpdate
+            elif (par_size + off_size) < pop_size:
+                raise PreventUpdate
+            elif par_size < 0:
+                raise PreventUpdate
+            elif off_size < 0:
+                raise PreventUpdate
+            elif n_crossover is not None and n_crossover < 0:
+                raise PreventUpdate
+            elif alpha is not None and (alpha < 0 or alpha > 1):
+                raise PreventUpdate
+            elif theta is not None and (alpha < 0):
                 raise PreventUpdate
             
             if sel_type == 'rank-based':
@@ -462,6 +508,18 @@ def create_app(configs, stats):
         return False
 
     @app.callback(
+        Output('n_crossover_value_wrong', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('n_crossover_value', 'value'),
+        State('n_crossover_value_collapse', 'is_open'), prevent_initial_call=True
+    )
+    def wrong_n(n, value, is_open):
+        if n is not None and is_open == True:
+            if value < 0 or value >= Configs.params['gene_size']:
+                return True
+        return False
+    
+    @app.callback(
         Output('mut_type_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('mut_type', 'value'), prevent_initial_call=True
@@ -528,6 +586,50 @@ def create_app(configs, stats):
         return False
     
     @app.callback(
+        Output('mut_rate_wrong', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('mut_rate', 'value'), prevent_initial_call=True
+    )
+    def wrong_mut_rate(n, value):
+        if None not in (n, value):
+            if value < 0 or value > 1:
+                return True
+        return False
+    
+    @app.callback(
+        Output('pop_size_wrong', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('pop_size', 'value'), prevent_initial_call=True
+    )
+    def wrong_pop_size(n, value):
+        if None not in (n, value):
+            if value < 1 or value > 128:
+                return True
+        return False
+    
+    @app.callback(
+        Output('wrong_off_size', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('off_size', 'value'), prevent_initial_call=True
+    )
+    def wrong_off_size(n, value):
+        if None not in (n, value):
+            if value < 0:
+                return True
+        return False
+    
+    @app.callback(
+        Output('wrong_par_size', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('par_size', 'value'), prevent_initial_call=True
+    )
+    def wrong_par_size(n, value):
+        if None not in (n, value):
+            if value < 0:
+                return True
+        return False
+    
+    @app.callback(
         Output('tourn_size_error', 'is_open'),
         Input('save', 'n_clicks'),
         State('tourn_size', 'value'),
@@ -550,6 +652,18 @@ def create_app(configs, stats):
             if value is None:
                 return True
         return False
+    
+    @app.callback(
+        Output('alpha_wrong', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('alpha', 'value'),
+        State('alpha_collapse', 'is_open'), prevent_initial_call=True
+    )
+    def wrong_alpha(n, value, is_open):
+        if n is not None and is_open == True:
+            if value < 0 or value > 1:
+                return True
+        return False
 
     @app.callback(
         Output('theta_error', 'is_open'),
@@ -562,6 +676,45 @@ def create_app(configs, stats):
             if value is None:
                 return True
         return False
+    
+    @app.callback(
+        Output('theta_wrong', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('theta', 'value'),
+        State('theta_collapse', 'is_open'), prevent_initial_call=True
+    )
+    def wrong_theta(n, value, is_open):
+        if n is not None and is_open == True:
+            if value < 0:
+                return True
+        return False
+    
+    @app.callback(
+        Output('tourn_parent_error', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('tourn_size', 'value'),
+        State('par_size', 'value'),
+        State('pop_size', 'value'), prevent_initial_call=True
+    )
+    def tourn_par_error(n, tourn_size, par_size, pop_size):
+        if None not in (n, tourn_size, par_size, pop_size):
+            if tourn_size < 0 or (tourn_size > par_size) or (tourn_size > pop_size):
+                return True
+        return False
+        
+    @app.callback(
+        Output('par_chi_error', 'is_open'),
+        Input('save', 'n_clicks'),
+        State('par_size', 'value'),
+        State('off_size', 'value'),
+        State('pop_size', 'value'), prevent_initial_call=True
+    )
+    def par_chi_error(n, par_size, off_size, pop_size):
+        if None not in (n, par_size, off_size, pop_size):
+            if (par_size + off_size) < pop_size:
+                return True
+        return False
+
     
     return app
 
