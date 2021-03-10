@@ -6,17 +6,6 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import base64
 
-# raw_board = 'board.png' # replace with your own image
-# encoded_board = base64.b64encode(open(raw_board, 'rb').read())
-# decoded_board = 'data:image/png;base64,{}'.format(encoded_board.decode())
-
-# raw_queen = 'queen.png' # replace with your own image
-# encoded_queen = base64.b64encode(open(raw_queen, 'rb').read())
-# decoded_queen = 'data:image/png;base64,{}'.format(encoded_queen.decode())
-
-# chess_board_fig = go.Figure()
-
-
 def network(self, ind):
     locs = np.loadtxt('loc.txt')  
     
@@ -35,12 +24,14 @@ def selection(self, ind):
     fig.add_trace(go.Scatter(x=value[np.where(ind['gene'] == 1)], 
                              y=weight[np.where(ind['gene'] == 1)],
                              mode='markers',
-                             name='Selected'))
+                             name='Selected item'))
     fig.add_trace(go.Scatter(x=value[np.where(ind['gene'] == 0)], 
                          y=weight[np.where(ind['gene'] == 0)],
                          mode='markers',
-                         name='Not selected'))
-    fig.update_layout(title='Current Best Item Selection', xaxis_title='Value of Item', yaxis_title='Weight of Item')
+                         name='Not selected item'))
+    fig.update_layout(title='Current Non-Dominated Item Selection', 
+                      xaxis_title='Value of item', 
+                      yaxis_title='Weight of item')
     
     return dcc.Graph(figure=fig)
 
@@ -48,56 +39,21 @@ def selection(self, ind):
 def chess_board(self, ind):
     fig = go.Figure()
 
-    z = np.zeros(shape=(self.params['gene_size'], self.params['gene_size']))
-    for i in range(self.params['gene_size']):
-        z[i][ind['gene'][i]] = 1
+    z = np.indices((self.params['gene_size'], self.params['gene_size'])).sum(axis=0) % 2
     
-    fig.add_trace(go.Heatmap(z=z))
-    fig.update_layout(title='Current Best Placement', xaxis_title='Column', yaxis_title='Row')
+    for i in range(self.params['gene_size']):
+        z[i][ind['gene'][i]] = 2
+    
+    fig.add_trace(go.Heatmap(z=z, x=[], y=[], showscale=False, colorscale=[[0, '#d18b47'], [0.5, '#ffce9e'], [1, 'black']]))
+    fig.update_layout(title='Current Best Placement')
+    
 
     return dcc.Graph(figure=fig)
-
-# def chess_board(self, ind):
-#     fig = go.Figure()
-
-#     fig.update_yaxes(range=(0, self.params['gene_size']), visible=False)
-#     fig.update_xaxes(range=(0, self.params['gene_size']), visible=False)
-#     fig.update_layout()
-#     fig.add_layout_image(
-#             dict(
-#                 source=decoded_board,
-#                 xref="x",
-#                 yref="y",
-#                 x=0,
-#                 y=self.params['gene_size'],
-#                 sizex=self.params['gene_size'],
-#                 sizey=self.params['gene_size'],
-#                 sizing="stretch",
-#                 opacity=1,
-#                 layer="below")
-#     )
-
-#     for i in range(self.params['gene_size']):
-#         fig.add_layout_image(
-#             dict(
-#                 source=decoded_queen,
-#                 xref="x",
-#                 yref="y",
-#                 x=i + 0.25,
-#                 y=ind['gene'][i],
-#                 sizex=1,
-#                 sizey=1,
-#                 opacity=0.75,
-#                 layer="below")
-#         )
-
-#     return dcc.Graph(figure=fig)
-
 
 
 def sudoku_board(self, ind): 
     fig = ff.create_annotated_heatmap(np.array(ind['gene'] % 10).reshape(10, 10), annotation_text=np.array(ind['gene'] % 10).reshape(10, 10))
     
-    fig.update_layout(title='Current Best Solution', xaxis_title='Column', yaxis_title='Row')
+    fig.update_layout(title='Current Best Solution')
     
     return dcc.Graph(figure=fig)
