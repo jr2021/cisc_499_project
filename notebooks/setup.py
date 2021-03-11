@@ -24,7 +24,7 @@ def create_app(configs):
     server = app.server
     app.layout = html.Div([dcc.Markdown('''##### Select a default configuration'''), 
                            dcc.Dropdown(id='pre_probs', 
-                                        options=[{'label': '32-Stop Traveling salesperson', 
+                                        options=[{'label': 'Western Sahara TSP', 
                                                   'value': 'trav'},
                                                  {'label': '64-Item Knapsack', 
                                                   'value': 'knap'},
@@ -260,9 +260,9 @@ def create_app(configs):
             configs.params['obj_names'] = ['Distance']
             configs.params['enc_name'] = 'Permutation'
             configs.params['enc_type'] = Perm(configs.params)
-            configs.params['gene_size'] = 16
+            configs.params['gene_size'] = 29
             configs.params['enc_type'].params['min_value'] = 0
-            configs.params['enc_type'].params['max_value'] = 15
+            configs.params['enc_type'].params['max_value'] = 28
             configs.params['eval_type'] = TSP
             configs.params['cust_vis'] = network
         elif pre_prob == 'knap':

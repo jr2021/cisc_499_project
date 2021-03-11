@@ -9,8 +9,8 @@ import base64
 def network(self, ind):
     locs = np.loadtxt('loc.txt')  
     
-    fig = go.Figure(data=[go.Scatter(x=[locs[0][0]] + [locs[0][ind['gene'][i]] for i in range(self.params['gene_size'])] + [locs[0][0]],
-                                     y=[locs[1][0]] + [locs[1][ind['gene'][i]] for i in range(self.params['gene_size'])] + [locs[1][0]],
+    fig = go.Figure(data=[go.Scatter(x=[locs[0][0]] + [locs[ind['gene'][i]][0] for i in range(self.params['gene_size'])] + [locs[0][0]],
+                                     y=[locs[1][0]] + [locs[ind['gene'][i]][1] for i in range(self.params['gene_size'])] + [locs[1][0]],
                                      mode='lines+markers')])
     fig.update_layout(title='Current Best Route', xaxis_title='Latitude', yaxis_title='Longitude')
     return dcc.Graph(figure=fig)
