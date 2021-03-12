@@ -74,25 +74,55 @@ The remaining crossover and mutation techniques are dependent on the encoding of
 
 #### Crossover
 
+##### n-point
+
+##### Uniform
+
 #### Mutation
+
+##### Bit-flip
 
 ### Permutation
 
 #### Crossover
 
+##### Order
+
+##### Partially-Mapped (PMX)
+
 #### Mutation
+
+##### Swap
+
+##### Scramble
 
 ### Integer
 
 #### Crossover
 
+##### N-point
+
+##### Uniform
+
 #### Mutation
+
+##### Random-resetting
+
+##### Creep
 
 ### Real-valued
 
 #### Crossover
 
+##### Whole-arithmetic
+
+##### Simple-arithmetic
+
 #### Mutation
+
+##### Uniform
+
+##### Non-uniform
 
 ## Visualizations
 
