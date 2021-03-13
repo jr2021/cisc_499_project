@@ -2,6 +2,10 @@
 
 Evolutionary computing draws inspiration from the natural process of evolution to solve complex optimization problems in various domains. Genetic algorithms (GAs) are a subfeild of evolutionary computing, where a population of candidate solutions to a given problem are evolved under the repeated process of selection, mutation, and crossover. Over many generations, GAs are especially useful for finding global optima in complex fitness landscapes. This Jupyter notebook transforms the development of GAs into an intuitive, interactive, process, by enabling the user to configure and run a GA from a predefined library of selection, mutation, and crossover techniques, visualize the results in real time, and update certain parameters to acheive better results.
 
+# Acknowledgments
+
+This project was completed in fulfillment of the course CISC 499 - Advanced Undergraduate Project at the Queen's School of Computing. Thank you to our supervisor, Professor Ting Hu for her supervision on this project.
+
 # Getting Started
 
 ## Google Colab
@@ -180,5 +184,6 @@ The second visualization leverages a heatmap to show the values in each allele f
 
 If you would like to reconfigure the problem type or representation, or select a new predefined problem instance, you must re-run the setup applet cell, select your desired configuration or problem instance, and re-run the main applet.
 
+# References
 
-
+[Introduction to Evolutionary Computing](https://link.springer.com/book/10.1007/978-3-662-44874-8)
