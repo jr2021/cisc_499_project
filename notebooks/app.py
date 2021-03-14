@@ -169,26 +169,30 @@ def create_app(configs, stats):
     def update_fitness(n):
         fig = go.Figure()
 
-        colors = px.colors.qualitative.Plotly
+        line_colors = px.colors.qualitative.Plotly
+        colors = ['rgba(99,110,250,0.5)', 'rgba(239,85,59,0.5)', 'rgba(0,204,150,0.5)']
         for i in range(configs.params['num_objs']):
             fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['maxs'][i],
                                      mode=None,
                                      fill=None,
-                                     line=dict(color=colors[i]),
-                                     showlegend=False,
+                                     opacity=0,
+                                     showlegend=False))
+            fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['maxs'][i],
+                                     mode='lines',
+                                     fill='tonexty',
+                                     line_color=line_colors[i],
                                      legendgroup=str(i),
                                      name='Max. ' + Configs.params['obj_names'][i]))
             fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['avgs'][i],
-                                     name=Configs.params['obj_names'][i],
+                                     name='Avg. ' + Configs.params['obj_names'][i],
                                      fill='tonexty',
-                                     line=dict(color=colors[i]),
+                                     line_color=line_colors[i],
                                      legendgroup=str(i),
                                      mode='lines'))
             fig.add_trace(go.Scatter(y=Stats.adhoc['fitness']['mins'][i],
                                      mode=None,
-                                     showlegend=False,
                                      name='Min. ' + Configs.params['obj_names'][i],
-                                     line=dict(color=colors[i]),
+                                     line_color=line_colors[i],
                                      legendgroup=str(i),
                                      fill='tonexty'))
 
@@ -299,7 +303,7 @@ def create_app(configs, stats):
                 raise PreventUpdate
             elif alpha is not None and (alpha < 0 or alpha > 1):
                 raise PreventUpdate
-            elif theta is not None and (alpha < 0):
+            elif theta is not None and (theta < 0 or theta > (Configs.params['max_value'] - Configs.params['min_value']) / 10):
                 raise PreventUpdate
             
             if sel_type == 'rank-based':
@@ -685,7 +689,7 @@ def create_app(configs, stats):
     )
     def wrong_theta(n, value, is_open):
         if n is not None and is_open == True:
-            if value < 0:
+            if value < 0 or value > (Configs.params['max_value'] - Configs.params['min_value']) / 10:
                 return True
         return False
     
