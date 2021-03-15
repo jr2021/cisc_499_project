@@ -1,4 +1,4 @@
-# [FIXME]
+# EvoDev
 
 Evolutionary computing draws inspiration from the natural process of evolution to solve complex optimization problems in various domains. Genetic algorithms (GAs) are a subfeild of evolutionary computing, where a population of candidate solutions to a given problem are evolved under the repeated process of selection, mutation, and crossover. Over many generations, GAs are especially useful for finding global optima in complex fitness landscapes. This Jupyter notebook transforms the development of GAs into an intuitive, interactive, process, by enabling the user to configure and run a GA from a predefined library of selection, mutation, and crossover techniques, visualize the results in real time, and update certain parameters to acheive better results.
 
@@ -24,7 +24,7 @@ In this section, we discuss the library of predefined problem instances, and cus
 
 ### Traveling Salesperson Problem (TSP)
 
-Given n points and their (x, y) locations, the goal of the TSP is to find the shortest route, starting and ending at the first point, and visiting each other point exactly once. The TSP uses a permutation encoding to represent the order in which the points are visited. In our predefedined TSP instance, we include a map of the [29 cities in the Western Sahara](http://www.math.uwaterloo.ca/tsp/world/wipoints.html). 
+Given n points and their (x, y) locations, the goal of the TSP is to find the shortest route, starting and ending at the first point, and visiting each other point exactly once. The TSP uses a permutation encoding to represent the order in which the points are visited. In our predefedined TSP instance, we include a map of the [29 cities in the Western Sahara](http://www.math.uwaterloo.ca/tsp/world/wipoints.html).
 
 ### Knapsack
 
@@ -32,7 +32,7 @@ Given n items and their weights and values, the goal of this modified version of
 
 ### n-Queens
 
-Given an (n x n) chessboard, the goal of the n-queens problem is to place n-queens in such a way that minimizes the checks on the board. Recall that queens can move horizontally, vertically, and diagnolly. The n-queens problem uses the permutation encoding, where a value in the ith position indicates the row in which the ith queen is placed. 
+Given an (n x n) chessboard, the goal of the n-queens problem is to place n-queens in such a way that minimizes the checks on the board. Recall that queens can move horizontally, vertically, and diagnolly. The n-queens problem uses the permutation encoding, where a value in the ith position indicates the row in which the ith queen is placed.
 
 ### Sudoku
 
@@ -62,7 +62,7 @@ Multi-objective problems are defined by multiple goals, to minimize or maximize 
 
 #### NSGA-II
 
-Solutions are divided into fronts based on the dominance relation, where a solution is said to dominate another individual if all of its fitness values are better in terms of the problem objectives. The first front (sometimes referred to as the Pareto front) is defined as the set of solutions that are not dominated by any other individual, the second front the set that are not dominated by any other solution not in the first front, and so on. 
+Solutions are divided into fronts based on the dominance relation, where a solution is said to dominate another individual if all of its fitness values are better in terms of the problem objectives. The first front (sometimes referred to as the Pareto front) is defined as the set of solutions that are not dominated by any other individual, the second front the set that are not dominated by any other solution not in the first front, and so on.
 
 ## Encodings
 
@@ -168,7 +168,7 @@ A single crossover point is randomly generated. The alleles before this point ar
 
 ## Visualizations
 
-We provide two predefined visualizations in order to inform the user on the progress of a run. 
+We provide two predefined visualizations in order to inform the user on the progress of a run.
 
 ### Fitness distribution convergence
 
