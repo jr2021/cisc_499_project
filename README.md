@@ -10,11 +10,35 @@ This project was completed in fulfillment of the course CISC 499 - Advanced Unde
 
 ## Google Colab
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1XXujTUFYNpspDnHVm8YjiNx9Ed-qXLNS?usp=sharing)
+
 ## Jupyter Lab/Notebook
 
-### MacOS
+Create a virtual environment
 
-### Windows
+```
+virtualenv venv
+source venv/bin/activate
+```
+
+Clone the repository
+
+```
+git clone https://github.com/jr2021/cisc_499_project.git
+```
+
+Install the dependencies
+
+```
+pip install -r requiremnts.txt
+```
+
+Run Jupyter Lab
+
+```
+jupyter lab
+```
+
 
 # Library
 
